@@ -6,19 +6,19 @@ import (
 	"github.com/entiqon/transport/auth"
 )
 
-// Option configures the API client.
+// Option represents a configuration option for the API client.
 type Option func(*api)
 
-// WithHTTPClient sets a custom HTTP client.
-func WithHTTPClient(c *http.Client) Option {
+// WithHTTPClient configures the HTTP client used to perform requests.
+func WithHTTPClient(client *http.Client) Option {
 	return func(a *api) {
-		a.http = c
+		a.http = client
 	}
 }
 
-// WithAuth sets the authentication strategy.
-func WithAuth(a auth.Auth) Option {
-	return func(c *api) {
-		c.auth = a
+// WithAuth configures the authentication strategy applied to requests.
+func WithAuth(strategy auth.Auth) Option {
+	return func(a *api) {
+		a.auth = strategy
 	}
 }

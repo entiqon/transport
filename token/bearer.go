@@ -1,14 +1,12 @@
-package auth
+package token
 
 import (
 	"context"
 	"net/http"
-
-	"github.com/entiqon/transport/auth/token"
 )
 
 type Bearer struct {
-	Provider token.Provider
+	Provider Provider
 }
 
 func (b Bearer) Apply(ctx context.Context, req *http.Request) error {

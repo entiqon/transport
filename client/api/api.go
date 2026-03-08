@@ -2,17 +2,27 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/entiqon/transport/auth"
 )
 
+// api implements a transport client capable of executing HTTP requests.
+//
+// The client converts a Request into an HTTP request, applies optional
+// authentication strategies, performs the request using an http.Client,
+// and returns the resulting Response.
 type api struct {
 	http *http.Client
 	auth auth.Auth
 }
 
-// New creates a new API client.
+// New creates a new API transport client.
+//
+// The client can be configured through functional options such as
+// custom HTTP clients or authentication strategies. If no HTTP client
+// is provided, http.DefaultClient is used.
 func New(opts ...Option) Client {
 
 	c := &api{
@@ -23,7 +33,6 @@ func New(opts ...Option) Client {
 		opt(c)
 	}
 
-	// validation
 	if c.http == nil {
 		c.http = http.DefaultClient
 	}
@@ -31,6 +40,11 @@ func New(opts ...Option) Client {
 	return c
 }
 
+// Execute performs the given transport Request.
+//
+// It validates the request, builds the underlying HTTP request,
+// applies authentication if configured, executes the request,
+// and returns the resulting Response.
 func (c *api) Execute(ctx context.Context, req *Request) (*Response, error) {
 
 	if req == nil {
@@ -45,7 +59,11 @@ func (c *api) Execute(ctx context.Context, req *Request) (*Response, error) {
 		return nil, MissingPathError
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, req.Method, req.Path, nil)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, req.Method, req.Path, req.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +71,12 @@ func (c *api) Execute(ctx context.Context, req *Request) (*Response, error) {
 	for k, v := range req.Headers {
 		httpReq.Header.Set(k, v)
 	}
+
+	q := httpReq.URL.Query()
+	for k, v := range req.Query {
+		q.Set(k, v)
+	}
+	httpReq.URL.RawQuery = q.Encode()
 
 	if c.auth != nil {
 		if err := c.auth.Apply(ctx, httpReq); err != nil {
@@ -66,7 +90,13 @@ func (c *api) Execute(ctx context.Context, req *Request) (*Response, error) {
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Response{
 		Status: resp.StatusCode,
+		Body:   bodyBytes,
 	}, nil
 }
