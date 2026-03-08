@@ -1,6 +1,8 @@
-package client
+package api
 
-import "context"
+import (
+	"context"
+)
 
 // Client defines a transport capable of executing
 // communication requests to external systems.

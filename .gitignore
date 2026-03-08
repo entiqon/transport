@@ -50,11 +50,6 @@ logs/
 *.out
 
 # local
-/docs/CHANGELOG.md
-/docs/releases/
-docs/_site/
-docs/public/
-public/
-
+/releases
 # env file
 .env

@@ -1,4 +1,4 @@
-package client
+package api
 
 // Request describes a transport request executed
 // by a communication client.

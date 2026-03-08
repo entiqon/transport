@@ -1,4 +1,4 @@
-package client
+package api
 
 // Response represents the result of a transport execution.
 type Response struct {
