@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Install GoTestX
+        run: go install github.com/entiqon/gotestx@v1.0.0
+
+      - name: Run tests with coverage
+        run: |
+          gotestx -cq
+
+      - name: Enforce minimum coverage (80%)
+        run: |
+          if [ ! -s coverage.out ]; then
+            echo "❌ coverage.out missing or empty"
+            exit 1
+          fi
+
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {print substr($3, 1, length($3)-1)}')
+          threshold=80.0
+
+          echo "Required coverage: ${threshold}%"
+          echo "Actual coverage: ${total}%"
+
+          awk -v total="$total" -v threshold="$threshold" '
+          BEGIN {
+            if (total < threshold) {
+              printf "❌ Coverage %.2f%% is below required %.2f%%\n", total, threshold
+              exit 1
+            } else {
+              printf "✅ Coverage %.2f%% meets required %.2f%%\n", total, threshold
+            }
+          }'
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: all
+          files: ./coverage.out
+          fail_ci_if_error: false

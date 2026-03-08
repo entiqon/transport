@@ -1,0 +1,23 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%        # overall coverage target
+        threshold: 1%      # failure threshold
+        base: auto         # auto-detect the base commit
+        if_ci_failed: error
+    patch:
+      default:
+        target: 80%        # PR/patch coverage target
+        threshold: 1%
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+
+ignore:
+  - "internal/test/"
+  - "**/*_mock.go"
+  - "**/mocks/**"
+  - "**/examples/**"
