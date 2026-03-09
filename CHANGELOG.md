@@ -6,6 +6,30 @@ The project follows **Semantic Versioning**.
 
 ---
 
+## [0.3.0] - 2026-03-09
+
+### Added
+
+- `BearerToken` credential strategy
+- Credential injection in the API client via `WithCredential`
+- Header helper methods for `Response`
+- Improved transport execution tests
+
+### Changed
+
+- Replaced authentication abstraction with credential-based model
+- `WithAuth` option replaced by `WithCredential`
+- Updated API client documentation and examples
+- Updated architecture documentation to reflect credential strategies
+
+### Improved
+
+- Expanded unit test coverage for credentials and execution paths
+- Improved GoDoc for transport primitives and credential interfaces
+- Updated repository documentation (README, architecture, API docs)
+
+---
+
 ## [0.2.0] - 2026-03-08
 
 ### Added
@@ -33,6 +57,7 @@ The project follows **Semantic Versioning**.
 ## [0.1.0] - Initial Release
 
 ### Added
+
 - Initial transport library foundation
 - HTTP API transport client (`client/api`)
 - Authentication interface (`auth.Auth`)

@@ -13,9 +13,9 @@ for executing requests across different communication transports.
 
 The library focuses strictly on the **communication layer**, allowing
 applications to interact with external systems through a unified
-transport abstraction. It is designed to remain **small, composable, and
-transport-focused**, leaving business logic, orchestration, and data
-transformation to the application layer.
+transport abstraction. It is designed to remain **small, composable,
+and transport-focused**, leaving business logic, orchestration, and
+data transformation to the application layer.
 
 ---
 
@@ -67,26 +67,60 @@ func main() {
 
 ---
 
+## Credentials Example
+
+Credential strategies can be injected into the client to modify
+outgoing requests before execution.
+
+```go
+client := api.New(
+	api.WithCredential(
+		token.NewBearerToken("token"),
+	),
+)
+```
+
+This automatically injects:
+
+```
+Authorization: Bearer token
+```
+
+into outgoing requests.
+
+---
+
 ## Documentation
 
 Detailed documentation is available in the `/docs` directory.
 
-- [APIClient](docs/api-client.md) – Client design and usage
+- API Client – Client design and usage
 - Architecture – transport architecture overview
 
 ---
 
 ## Roadmap
 
+### Transport
+
 - [x] Core transport client interface
 - [x] Request / response primitives
 - [x] HTTP/API transport client
-- [x] Authentication abstraction
 - [ ] SFTP transport client
 - [ ] Retry and timeout helpers
 - [ ] Client registry
 - [ ] Transport middleware support
 - [ ] Webhook utilities
+
+### Credentials
+
+- [x] Credential abstraction
+- [x] AccessToken strategy
+- [x] BearerToken strategy
+- [ ] APIKey strategy
+- [ ] BasicAuth strategy
+- [ ] HMAC request signing
+- [ ] OAuth token resolvers
 
 ---
 

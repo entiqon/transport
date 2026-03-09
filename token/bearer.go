@@ -3,18 +3,28 @@ package token
 import (
 	"context"
 	"net/http"
+
+	"github.com/entiqon/transport/auth"
 )
 
-type Bearer struct {
-	Provider Provider
+// BearerToken implements auth.Credential using the HTTP Authorization
+// header with the Bearer authentication scheme.
+//
+// This strategy is commonly used with OAuth2 APIs and services
+// that require a static or externally managed bearer token.
+type bearerToken struct {
+	token string
 }
 
-func (b Bearer) Apply(ctx context.Context, req *http.Request) error {
-	t, err := b.Provider.Token(ctx)
-	if err != nil {
-		return err
+// NewBearerToken creates a new Bearer token authentication strategy.
+func NewBearerToken(token string) auth.Credential {
+	return &bearerToken{
+		token: token,
 	}
+}
 
-	req.Header.Set("Authorization", "Bearer "+t)
+// Apply adds the Authorization header using the Bearer scheme.
+func (b *bearerToken) Apply(_ context.Context, r *http.Request) error {
+	r.Header.Set("Authorization", "Bearer "+b.token)
 	return nil
 }

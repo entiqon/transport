@@ -59,8 +59,49 @@ func Example_execute_withAccessToken() {
 	ctx := context.Background()
 
 	client := api.New(
-		api.WithAuth(
+		api.WithCredential(
 			token.NewAccessToken("X-Access-Token", "token"),
+		),
+	)
+
+	req := &api.Request{
+		Method: "GET",
+		Path:   server.URL,
+	}
+
+	resp, err := client.Execute(ctx, req)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(resp.Status)
+
+	// Output:
+	// 200
+}
+
+// Example_execute_withBearerToken demonstrates configuring the API client
+// with a Bearer token credential and executing a request that requires
+// the Authorization header.
+func Example_execute_withBearerToken() {
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Header.Get("Authorization") != "Bearer token" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+
+	client := api.New(
+		api.WithCredential(
+			token.NewBearerToken("token"),
 		),
 	)
 

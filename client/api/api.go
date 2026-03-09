@@ -14,8 +14,8 @@ import (
 // authentication strategies, performs the request using an http.Client,
 // and returns the resulting Response.
 type api struct {
-	http *http.Client
-	auth auth.Auth
+	http       *http.Client
+	credential auth.Credential
 }
 
 // New creates a new API transport client.
@@ -78,8 +78,8 @@ func (c *api) Execute(ctx context.Context, req *Request) (*Response, error) {
 	}
 	httpReq.URL.RawQuery = q.Encode()
 
-	if c.auth != nil {
-		if err := c.auth.Apply(ctx, httpReq); err != nil {
+	if c.credential != nil {
+		if err := c.credential.Apply(ctx, httpReq); err != nil {
 			return nil, err
 		}
 	}
@@ -90,13 +90,22 @@ func (c *api) Execute(ctx context.Context, req *Request) (*Response, error) {
 	}
 	defer resp.Body.Close()
 
+	headers := make(map[string]string)
+	for k, v := range resp.Header {
+		if len(v) > 0 {
+			headers[k] = v[0]
+		}
+	}
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Response{
-		Status: resp.StatusCode,
-		Body:   bodyBytes,
+		Status:  resp.StatusCode,
+		Headers: headers,
+		Body:    bodyBytes,
+		Raw:     resp,
 	}, nil
 }

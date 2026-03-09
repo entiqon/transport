@@ -5,17 +5,17 @@ import (
 	"net/http"
 )
 
-// Auth represents a strategy capable of applying authentication
-// information to an outgoing HTTP request.
+// Credential represents a strategy that applies authentication
+// data to an outgoing HTTP request.
 //
-// Implementations typically modify request headers (for example,
-// Authorization or API tokens) before the request is sent by the
-// transport client.
+// Implementations typically mutate request headers (for example,
+// Authorization or API tokens) before the request is executed by
+// the transport client.
 //
 // The Apply method is invoked during request execution and should:
 //
 //   - mutate the provided request as needed
-//   - avoid performing heavy operations
+//   - avoid blocking or network operations
 //   - avoid mutating shared state
 //
 // Implementations should be safe for reuse across multiple requests.
@@ -23,17 +23,18 @@ import (
 // Example:
 //
 //	client := api.New(
-//	    api.WithAuth(auth.NewAccessToken("X-Access-Token", token)),
+//	    api.WithCredential(token.NewAccessToken("X-Access-Token", token)),
 //	)
 //
 // The auth package intentionally defines only this minimal interface
-// so authentication strategies remain transport-agnostic.
-type Auth interface {
+// so credential strategies remain transport-agnostic.
+type Credential interface {
+
 	// Apply modifies the provided HTTP request to include
 	// authentication data.
 	//
 	// The request will be executed immediately after Apply returns,
-	// so implementations should avoid long-running operations.
+	// so implementations should avoid long-running or blocking work.
 	//
 	// Returning an error prevents the request from being executed.
 	Apply(ctx context.Context, req *http.Request) error

@@ -2,11 +2,10 @@
 
 Package: `github.com/entiqon/transport/client/api`
 
-The `api` package provides an HTTP transport client for the transport
-library.
+The `api` package provides an HTTP transport client for the transport library.
 
 It focuses on executing HTTP requests through a minimal and configurable
-interface while remaining independent of authentication strategies and
+interface while remaining independent of credential strategies and
 application-specific behavior.
 
 ---
@@ -25,9 +24,10 @@ When executing a request, the client performs the following steps:
 
 1. Validate the request
 2. Construct an `http.Request`
-3. Apply authentication if configured
-4. Execute the request using the configured HTTP client
-5. Return the transport response
+3. Apply request headers and query parameters
+4. Apply credentials if configured
+5. Execute the request using the configured HTTP client
+6. Read and return the transport response
 
 ---
 
@@ -37,19 +37,26 @@ Represents a transport request.
 
 ```go
 type Request struct {
-    Method  string
-    Path    string
-    Headers map[string]string
-    Body    any
+    Connection string
+    Method     string
+    Path       string
+    Headers    map[string]string
+    Query      map[string]string
+    Body       io.Reader
 }
 ```
 
-| Field   | Description                                |
-|---------|--------------------------------------------|
-| Method  | HTTP method (GET, POST, PUT, DELETE, etc.) |
-| Path    | Absolute URL or endpoint                   |
-| Headers | Optional HTTP headers                      |
-| Body    | Optional request payload                   |
+| Field | Description |
+|------|-------------|
+| Connection | Logical connection identifier used by higher-level integrations |
+| Method | HTTP method (GET, POST, PUT, DELETE, etc.) |
+| Path | Absolute URL or endpoint |
+| Headers | Optional HTTP headers |
+| Query | Optional query parameters |
+| Body | Optional request payload |
+
+The `Body` field accepts any `io.Reader`, allowing flexible payload
+streaming such as JSON encoders, byte buffers, or files.
 
 ---
 
@@ -59,12 +66,20 @@ Represents the transport response.
 
 ```go
 type Response struct {
-    Status int
+    Status  int
+    Headers map[string]string
+    Body    []byte
 }
 ```
 
-The API client intentionally exposes a minimal response structure.
-Additional response processing can be implemented by the caller.
+| Field | Description |
+|------|-------------|
+| Status | HTTP status code |
+| Headers | Response headers |
+| Body | Raw response payload |
+
+The API client intentionally returns the raw payload so that callers
+can perform custom decoding or processing.
 
 ---
 
@@ -94,37 +109,50 @@ This allows configuration of:
 
 - custom transports
 - timeouts
-- connection behavior
+- connection pooling
 - instrumentation
+- retry logic
 
 ---
 
-### WithAuth
+### WithCredential
 
-Registers an authentication strategy.
+Registers a credential strategy.
 
 ```go
-api.WithAuth(authStrategy)
+api.WithCredential(credential)
 ```
 
-The authentication strategy must implement the `auth.Auth` interface.
+The credential strategy must implement the `auth.Credential` interface.
 
-Authentication implementations are defined in the `auth` package.
+Credential implementations are defined in the `auth` and `token`
+packages.
 
 ---
 
-## Authentication
+## Credentials
 
-Authentication strategies are independent of the API transport client.
-They are applied to the HTTP request before execution.
+Credential strategies are independent of the API transport client
+and are applied to the request before execution.
 
-Example:
+Example using an **Access Token header**:
 
 ```go
 client := api.New(
-    api.WithAuth(auth.NewAccessToken("X-Access-Token", "token")),
+    api.WithCredential(token.NewAccessToken("X-Access-Token", "token")),
 )
 ```
+
+Example using a **Bearer token**:
+
+```go
+client := api.New(
+    api.WithCredential(token.NewBearerToken("token")),
+)
+```
+
+This design keeps the transport layer independent from credential
+mechanisms.
 
 ---
 

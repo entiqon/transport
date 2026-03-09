@@ -1,13 +1,20 @@
-// Package api provides an HTTP transport client implementation
-// for the transport library.
+// Package api provides an HTTP transport client for the transport library.
 //
-// The client executes HTTP requests using a minimal transport
-// abstraction and supports:
+// The API client focuses exclusively on executing HTTP requests while
+// remaining independent of authentication mechanisms and application
+// business logic.
 //
-//   - request validation
-//   - header propagation
-//   - authentication hooks
-//   - configurable HTTP client
+// Authentication data is applied through strategies implementing the
+// auth.Credential interface. These strategies modify outgoing requests
+// before execution.
 //
-// Configuration is performed using functional options.
+// Example:
+//
+//	client := api.New(
+//	    api.WithCredential(token.NewBearerToken("token")),
+//	)
+//
+// The client validates requests, constructs an http.Request,
+// applies credentials if configured, and executes the request
+// using the configured http.Client.
 package api

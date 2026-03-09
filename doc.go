@@ -12,6 +12,10 @@
 //
 // These responsibilities belong to the consuming application.
 //
+// Authentication or credential handling is delegated to
+// pluggable credential strategies that can modify outgoing
+// transport requests.
+//
 // The project is designed to remain small, composable,
 // and transport-focused.
 package transport

@@ -18,7 +18,7 @@ type accessToken struct {
 }
 
 // NewAccessToken creates a new AccessToken authentication strategy.
-func NewAccessToken(header, token string) auth.Auth {
+func NewAccessToken(header, token string) auth.Credential {
 	return &accessToken{
 		Header: header,
 		Token:  token,

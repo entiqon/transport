@@ -6,7 +6,7 @@ import (
 	"github.com/entiqon/transport/auth"
 )
 
-// Option represents a configuration option for the API client.
+// Option configures the API client.
 type Option func(*api)
 
 // WithHTTPClient configures the HTTP client used to perform requests.
@@ -16,9 +16,9 @@ func WithHTTPClient(client *http.Client) Option {
 	}
 }
 
-// WithAuth configures the authentication strategy applied to requests.
-func WithAuth(strategy auth.Auth) Option {
+// WithCredential configures the credential strategy applied to outgoing requests.
+func WithCredential(credential auth.Credential) Option {
 	return func(a *api) {
-		a.auth = strategy
+		a.credential = credential
 	}
 }
