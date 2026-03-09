@@ -2,6 +2,7 @@ package token
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/entiqon/transport/auth"
@@ -13,20 +14,24 @@ import (
 // This pattern is commonly used by APIs such as Shopify and other
 // header-token based authentication systems.
 type accessToken struct {
-	Header string
-	Token  string
+	key   string
+	value string
 }
 
 // NewAccessToken creates a new AccessToken authentication strategy.
 func NewAccessToken(header, token string) auth.Credential {
 	return &accessToken{
-		Header: header,
-		Token:  token,
+		key:   header,
+		value: token,
 	}
 }
 
 // Apply injects the access token into the request header.
 func (a *accessToken) Apply(_ context.Context, r *http.Request) error {
-	r.Header.Set(a.Header, a.Token)
+	if a.key == "" {
+		return errors.New("api key missing")
+	}
+
+	r.Header.Set(a.key, a.value)
 	return nil
 }

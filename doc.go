@@ -12,9 +12,14 @@
 //
 // These responsibilities belong to the consuming application.
 //
-// Authentication or credential handling is delegated to
-// pluggable credential strategies that can modify outgoing
-// transport requests.
+// Authentication is handled through pluggable credential strategies
+// that modify outgoing transport requests before execution.
+//
+// Supported credential strategies include:
+//
+//   - AccessToken
+//   - BearerToken
+//   - APIKey
 //
 // The project is designed to remain small, composable,
 // and transport-focused.

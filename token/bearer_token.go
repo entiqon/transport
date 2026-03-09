@@ -2,7 +2,9 @@ package token
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/entiqon/transport/auth"
 )
@@ -25,6 +27,10 @@ func NewBearerToken(token string) auth.Credential {
 
 // Apply adds the Authorization header using the Bearer scheme.
 func (b *bearerToken) Apply(_ context.Context, r *http.Request) error {
+	if strings.TrimSpace(b.token) == "" {
+		return fmt.Errorf("token is empty")
+	}
+
 	r.Header.Set("Authorization", "Bearer "+b.token)
 	return nil
 }

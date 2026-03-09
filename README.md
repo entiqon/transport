@@ -33,36 +33,23 @@ of the underlying communication mechanism.
 ## Example
 
 ```go
-package main
+ctx := context.Background()
 
-import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"github.com/entiqon/transport/client/api"
+client := api.New(
+	api.WithHTTPClient(http.DefaultClient),
 )
 
-func main() {
-
-	ctx := context.Background()
-
-	client := api.New(
-		api.WithHTTPClient(http.DefaultClient),
-	)
-
-	req := &api.Request{
-		Method: "GET",
-		Path:   "https://example.com",
-	}
-
-	resp, err := client.Execute(ctx, req)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(resp.Status)
+req := &api.Request{
+	Method: "GET",
+	Path:   "https://example.com",
 }
+
+resp, err := client.Execute(ctx, req)
+if err != nil {
+	panic(err)
+}
+
+fmt.Println(resp.Status)
 ```
 
 ---
@@ -72,6 +59,18 @@ func main() {
 Credential strategies can be injected into the client to modify
 outgoing requests before execution.
 
+### Access Token
+
+```go
+client := api.New(
+	api.WithCredential(
+		token.NewAccessToken("X-Access-Token", "token"),
+	),
+)
+```
+
+### Bearer Token
+
 ```go
 client := api.New(
 	api.WithCredential(
@@ -80,13 +79,21 @@ client := api.New(
 )
 ```
 
-This automatically injects:
+Injects:
 
 ```
 Authorization: Bearer token
 ```
 
-into outgoing requests.
+### API Key
+
+```go
+client := api.New(
+	api.WithCredential(
+		token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
+	),
+)
+```
 
 ---
 
@@ -117,7 +124,7 @@ Detailed documentation is available in the `/docs` directory.
 - [x] Credential abstraction
 - [x] AccessToken strategy
 - [x] BearerToken strategy
-- [ ] APIKey strategy
+- [x] APIKey strategy
 - [ ] BasicAuth strategy
 - [ ] HMAC request signing
 - [ ] OAuth token resolvers

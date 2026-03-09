@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/entiqon/transport/client/api"
-	"github.com/entiqon/transport/token"
 )
 
 type fakeCredential struct {
@@ -75,111 +74,45 @@ func TestAPIClient(t *testing.T) {
 	})
 
 	t.Run("Auth", func(t *testing.T) {
-		t.Run("Credentials", func(t *testing.T) {
 
-			t.Run("AccessToken", func(t *testing.T) {
+		t.Run("CredentialApplied", func(t *testing.T) {
 
-				t.Run("Success", func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer server.Close()
 
-					server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			client := api.New(
+				api.WithCredential(fakeCredential{err: nil}),
+			)
 
-						if r.Header.Get("X-Access-Token") != "test" {
-							t.Fatalf(
-								"expected header 'X-Access-Token=test', got '%s'",
-								r.Header.Get("X-Access-Token"),
-							)
-						}
+			req := &api.Request{
+				Method: "GET",
+				Path:   server.URL,
+			}
 
-						w.WriteHeader(http.StatusOK)
-					}))
-					defer server.Close()
+			_, err := client.Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 
-					client := api.New(api.WithCredential(
-						token.NewAccessToken("X-Access-Token", "test"),
-					))
+		t.Run("CredentialError", func(t *testing.T) {
 
-					req := &api.Request{
-						Method: "GET",
-						Path:   server.URL,
-					}
+			client := api.New(
+				api.WithCredential(fakeCredential{err: errors.New("credential failed")}),
+			)
 
-					_, err := client.Execute(context.Background(), req)
-					if err != nil {
-						t.Fatal(err)
-					}
-				})
+			req := &api.Request{
+				Method: "GET",
+				Path:   "https://example.com",
+			}
 
-				t.Run("Error", func(t *testing.T) {
+			_, err := client.Execute(context.Background(), req)
 
-					client := api.New(
-						api.WithCredential(fakeCredential{err: errors.New("credential failed")}),
-					)
-
-					req := &api.Request{
-						Method: "GET",
-						Path:   "https://example.com",
-					}
-
-					_, err := client.Execute(context.Background(), req)
-
-					if err == nil {
-						t.Fatal("expected credential error")
-					}
-				})
-			})
-
-			t.Run("BearerToken", func(t *testing.T) {
-
-				t.Run("Success", func(t *testing.T) {
-
-					server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-						if r.Header.Get("Authorization") != "Bearer token" {
-							t.Fatalf(
-								"expected Authorization 'Bearer token', got '%s'",
-								r.Header.Get("Authorization"),
-							)
-						}
-
-						w.WriteHeader(http.StatusOK)
-					}))
-					defer server.Close()
-
-					client := api.New(
-						api.WithCredential(
-							token.NewBearerToken("token"),
-						),
-					)
-
-					req := &api.Request{
-						Method: "GET",
-						Path:   server.URL,
-					}
-
-					_, err := client.Execute(context.Background(), req)
-					if err != nil {
-						t.Fatal(err)
-					}
-				})
-
-				t.Run("Error", func(t *testing.T) {
-
-					client := api.New(
-						api.WithCredential(fakeCredential{err: errors.New("bearer error")}),
-					)
-
-					req := &api.Request{
-						Method: "GET",
-						Path:   "https://example.com",
-					}
-
-					_, err := client.Execute(context.Background(), req)
-
-					if err == nil {
-						t.Fatal("expected bearer credential error")
-					}
-				})
-			})
+			if err == nil {
+				t.Fatal("expected credential error")
+			}
 		})
 	})
 
@@ -281,86 +214,82 @@ func TestAPIClient(t *testing.T) {
 			}
 		})
 
-		t.Run("Query", func(t *testing.T) {
+		t.Run("QueryPropagation", func(t *testing.T) {
 
-			t.Run("Propagation", func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-					if r.URL.Query().Get("q") != "transport" {
-						t.Fatalf(
-							"expected query 'transport', got '%s'",
-							r.URL.Query().Get("q"),
-						)
-					}
-
-					if r.URL.Query().Get("page") != "1" {
-						t.Fatalf(
-							"expected query '1', got '%s'",
-							r.URL.Query().Get("page"),
-						)
-					}
-
-					w.WriteHeader(http.StatusOK)
-				}))
-				defer server.Close()
-
-				client := api.New()
-
-				req := &api.Request{
-					Method: "GET",
-					Path:   server.URL,
-					Query: map[string]string{
-						"q":    "transport",
-						"page": "1",
-					},
+				if r.URL.Query().Get("q") != "transport" {
+					t.Fatalf(
+						"expected query 'transport', got '%s'",
+						r.URL.Query().Get("q"),
+					)
 				}
 
-				resp, err := client.Execute(context.Background(), req)
-				if err != nil {
-					t.Fatal(err)
+				if r.URL.Query().Get("page") != "1" {
+					t.Fatalf(
+						"expected query '1', got '%s'",
+						r.URL.Query().Get("page"),
+					)
 				}
 
-				if resp.Status != http.StatusOK {
-					t.Fatalf("unexpected status: %d", resp.Status)
-				}
-			})
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer server.Close()
+
+			client := api.New()
+
+			req := &api.Request{
+				Method: "GET",
+				Path:   server.URL,
+				Query: map[string]string{
+					"q":    "transport",
+					"page": "1",
+				},
+			}
+
+			resp, err := client.Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if resp.Status != http.StatusOK {
+				t.Fatalf("unexpected status: %d", resp.Status)
+			}
 		})
 
-		t.Run("Headers", func(t *testing.T) {
+		t.Run("HeaderPropagation", func(t *testing.T) {
 
-			t.Run("Propagation", func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-					if r.Header.Get("X-Test-Header") != "transport-test" {
-						t.Fatalf("expected header 'transport-test', got '%s'",
-							r.Header.Get("X-Test-Header"))
-					}
-
-					w.WriteHeader(http.StatusOK)
-				}))
-				defer server.Close()
-
-				client := api.New()
-
-				req := &api.Request{
-					Method: "GET",
-					Path:   server.URL,
-					Headers: map[string]string{
-						"X-Test-Header": "transport-test",
-					},
+				if r.Header.Get("X-Test-Header") != "transport-test" {
+					t.Fatalf(
+						"expected header 'transport-test', got '%s'",
+						r.Header.Get("X-Test-Header"),
+					)
 				}
 
-				resp, err := client.Execute(context.Background(), req)
-				if err != nil {
-					t.Fatal(err)
-				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer server.Close()
 
-				if resp.Status != http.StatusOK {
-					t.Fatalf("unexpected status: %d", resp.Status)
-				}
-			})
+			client := api.New()
+
+			req := &api.Request{
+				Method: "GET",
+				Path:   server.URL,
+				Headers: map[string]string{
+					"X-Test-Header": "transport-test",
+				},
+			}
+
+			resp, err := client.Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if resp.Status != http.StatusOK {
+				t.Fatalf("unexpected status: %d", resp.Status)
+			}
 		})
 
 		t.Run("Errors", func(t *testing.T) {

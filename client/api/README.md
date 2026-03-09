@@ -151,6 +151,16 @@ client := api.New(
 )
 ```
 
+Example using an **API Key**:
+
+```go
+client := api.New(
+    api.WithCredential(
+        token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
+    ),
+)
+```
+
 This design keeps the transport layer independent from credential
 mechanisms.
 

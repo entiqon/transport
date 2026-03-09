@@ -8,7 +8,7 @@ transport library.
 These credentials implement the `auth.Credential` interface and inject
 authentication information into outgoing HTTP requests.
 
-Token credentials are independent from the transport client and can be
+Token credentials are independent of the transport client and can be
 applied through transport configuration options.
 
 ---
@@ -43,6 +43,28 @@ authentication.
 The credential sets the header:
 
 Authorization: Bearer <token>
+
+---
+
+### API Key
+
+The API Key credential injects a static key into outgoing HTTP requests.
+
+The key can be applied either as:
+
+- an HTTP header
+- a query parameter
+
+This pattern is commonly used by third‑party APIs that rely on
+simple API key authentication.
+
+Example header usage:
+
+X-API-Key: <key>
+
+Example query usage:
+
+https://api.example.com/resource?api_key=<key>
 
 ---
 

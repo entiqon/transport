@@ -12,7 +12,7 @@ import (
 
 // Example_execute demonstrates executing a simple HTTP request using
 // the default API client configuration.
-func Example_execute() {
+func ExampleClient_execute() {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -42,7 +42,7 @@ func Example_execute() {
 // Example_execute_withAccessToken demonstrates configuring the API client
 // with an access token authentication strategy and executing a request
 // that requires the token to be present in the request headers.
-func Example_execute_withAccessToken() {
+func ExampleClient_execute_withAccessToken() {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -83,7 +83,7 @@ func Example_execute_withAccessToken() {
 // Example_execute_withBearerToken demonstrates configuring the API client
 // with a Bearer token credential and executing a request that requires
 // the Authorization header.
-func Example_execute_withBearerToken() {
+func ExampleClient_execute_withBearerToken() {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -102,6 +102,47 @@ func Example_execute_withBearerToken() {
 	client := api.New(
 		api.WithCredential(
 			token.NewBearerToken("token"),
+		),
+	)
+
+	req := &api.Request{
+		Method: "GET",
+		Path:   server.URL,
+	}
+
+	resp, err := client.Execute(ctx, req)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(resp.Status)
+
+	// Output:
+	// 200
+}
+
+// Example_execute_withAPIKey demonstrates configuring the API client
+// with an API key credential and executing a request that requires
+// the API key to be present in the request headers.
+func ExampleClient_Execute_withAPIKey() {
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Header.Get("X-API-Key") != "token" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+
+	}))
+	defer server.Close()
+
+	ctx := context.Background()
+
+	client := api.New(
+		api.WithCredential(
+			token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
 		),
 	)
 

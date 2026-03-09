@@ -6,23 +6,54 @@ The project follows **Semantic Versioning**.
 
 ---
 
-## [0.3.0] - 2026-03-09
+# [0.4.0] - 2026-03-09
 
-### Added
+## Added
+
+- `APIKey` credential strategy supporting:
+  - header injection
+  - query parameter injection
+- Optional API key location (defaults to **header** when not provided)
+- Validation for API key configuration:
+  - missing key name
+  - missing value
+  - invalid location
+- Minimal usage examples for token credentials on **pkg.go.dev**
+- Expanded credential tests for APIKey usage
+
+## Improved
+
+- Expanded credential documentation across **README** and **GoDoc**
+- Improved examples for:
+  - `AccessToken`
+  - `BearerToken`
+  - `APIKey`
+- Improved test coverage across authentication strategies
+- Minor documentation refinements across the repository
+
+## Compatibility
+
+This release is fully backward compatible with **v0.3.0**.
+
+---
+
+# [0.3.0] - 2026-03-09
+
+## Added
 
 - `BearerToken` credential strategy
 - Credential injection in the API client via `WithCredential`
 - Header helper methods for `Response`
 - Improved transport execution tests
 
-### Changed
+## Changed
 
 - Replaced authentication abstraction with credential-based model
 - `WithAuth` option replaced by `WithCredential`
 - Updated API client documentation and examples
 - Updated architecture documentation to reflect credential strategies
 
-### Improved
+## Improved
 
 - Expanded unit test coverage for credentials and execution paths
 - Improved GoDoc for transport primitives and credential interfaces
@@ -30,33 +61,33 @@ The project follows **Semantic Versioning**.
 
 ---
 
-## [0.2.0] - 2026-03-08
+# [0.2.0] - 2026-03-08
 
-### Added
+## Added
 
 - Authentication abstraction via `auth.Auth`
 - `AccessToken` authentication strategy
 - Authentication support in the API client through `WithAuth`
 
-### Improved
+## Improved
 
 - Expanded API client examples
 - Improved unit test coverage for transport execution paths
 - Clearer GoDoc documentation for transport primitives
 
-### Changed
+## Changed
 
 - Refactored authentication logic to fully decouple it from the transport client
 
-### Removed
+## Removed
 
 - Unused token provider abstraction
 
 ---
 
-## [0.1.0] - Initial Release
+# [0.1.0] - Initial Release
 
-### Added
+## Added
 
 - Initial transport library foundation
 - HTTP API transport client (`client/api`)
