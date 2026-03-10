@@ -1,172 +1,193 @@
-# API Client
+# entiqon/transport
 
-Package: `github.com/entiqon/transport/client/api`
+[![Go Reference](https://pkg.go.dev/badge/github.com/entiqon/transport.svg)](https://pkg.go.dev/github.com/entiqon/transport)
+[![CI](https://github.com/entiqon/transport/actions/workflows/ci.yml/badge.svg)](https://github.com/entiqon/transport/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/entiqon/transport/branch/main/graph/badge.svg)](https://codecov.io/gh/entiqon/transport)
+[![Go Report Card](https://goreportcard.com/badge/github.com/entiqon/transport)](https://goreportcard.com/report/github.com/entiqon/transport)
+[![Latest Release](https://img.shields.io/github/v/release/entiqon/transport)](https://github.com/entiqon/transport/releases)
+[![License](https://img.shields.io/github/license/entiqon/transport)](https://github.com/entiqon/transport/blob/main/LICENSE)
 
-The `api` package provides an HTTP transport client for the transport library.
+`transport` is a minimal Go library providing reusable primitives
+for executing requests across different communication transports.
 
-It focuses on executing HTTP requests through a minimal and configurable
-interface while remaining independent of credential strategies and
-application-specific behavior.
+The library focuses strictly on the **communication layer**, allowing
+applications to interact with external systems through a unified
+transport abstraction.
+
+It is designed to remain **small, composable, and transport-focused**,
+leaving orchestration, retries, and domain logic to the consuming
+application.
 
 ---
 
-## Client
+## Architecture
 
-`Client` represents a transport executor.
+The library is organized into small composable packages:
+
+```
+transport (core primitives)
+├── Client
+├── Request
+└── Response
+      ↑
+client/api (HTTP implementation)
+      ↑
+auth (authentication contracts)
+      ↑
+credential (request mutation strategies)
+      ↑
+provider (credential resolution)
+```
+
+This layering ensures:
+
+- transport execution is independent from authentication
+- credentials remain pluggable
+- providers can dynamically resolve credentials
+
+---
+
+## Quick Example
 
 ```go
-type Client interface {
-    Execute(ctx context.Context, req *Request) (*Response, error)
+package main
+
+import (
+    "context"
+    "fmt"
+    "net/http"
+
+    "github.com/entiqon/transport"
+    "github.com/entiqon/transport/client/api"
+)
+
+func main() {
+
+    ctx := context.Background()
+
+    client := api.New(
+        api.WithHTTPClient(http.DefaultClient),
+    )
+
+    req := &transport.Request{
+        Method: "GET",
+        Path:   "https://example.com",
+    }
+
+    resp, err := client.Execute(ctx, req)
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(resp.Status)
 }
 ```
 
-When executing a request, the client performs the following steps:
-
-1. Validate the request
-2. Construct an `http.Request`
-3. Apply request headers and query parameters
-4. Apply credentials if configured
-5. Execute the request using the configured HTTP client
-6. Read and return the transport response
-
 ---
 
-## Request
+## Credential Strategies
 
-Represents a transport request.
+Credential strategies mutate outgoing requests before execution.
 
-```go
-type Request struct {
-    Connection string
-    Method     string
-    Path       string
-    Headers    map[string]string
-    Query      map[string]string
-    Body       io.Reader
-}
-```
-
-| Field | Description |
-|------|-------------|
-| Connection | Logical connection identifier used by higher-level integrations |
-| Method | HTTP method (GET, POST, PUT, DELETE, etc.) |
-| Path | Absolute URL or endpoint |
-| Headers | Optional HTTP headers |
-| Query | Optional query parameters |
-| Body | Optional request payload |
-
-The `Body` field accepts any `io.Reader`, allowing flexible payload
-streaming such as JSON encoders, byte buffers, or files.
-
----
-
-## Response
-
-Represents the transport response.
-
-```go
-type Response struct {
-    Status  int
-    Headers map[string]string
-    Body    []byte
-}
-```
-
-| Field | Description |
-|------|-------------|
-| Status | HTTP status code |
-| Headers | Response headers |
-| Body | Raw response payload |
-
-The API client intentionally returns the raw payload so that callers
-can perform custom decoding or processing.
-
----
-
-## Client Construction
-
-The API client is created using functional options.
-
-```go
-client := api.New(
-    api.WithHTTPClient(http.DefaultClient),
-)
-```
-
----
-
-## Options
-
-### WithHTTPClient
-
-Provides a custom `http.Client`.
-
-```go
-api.WithHTTPClient(httpClient)
-```
-
-This allows configuration of:
-
-- custom transports
-- timeouts
-- connection pooling
-- instrumentation
-- retry logic
-
----
-
-### WithCredential
-
-Registers a credential strategy.
-
-```go
-api.WithCredential(credential)
-```
-
-The credential strategy must implement the `auth.Credential` interface.
-
-Credential implementations are defined in the `auth` and `token`
-packages.
-
----
-
-## Credentials
-
-Credential strategies are independent of the API transport client
-and are applied to the request before execution.
-
-Example using an **Access Token header**:
-
-```go
-client := api.New(
-    api.WithCredential(token.NewAccessToken("X-Access-Token", "token")),
-)
-```
-
-Example using a **Bearer token**:
-
-```go
-client := api.New(
-    api.WithCredential(token.NewBearerToken("token")),
-)
-```
-
-Example using an **API Key**:
+### Bearer Token
 
 ```go
 client := api.New(
     api.WithCredential(
-        token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
+        credential.BearerToken("token"),
     ),
 )
 ```
 
-This design keeps the transport layer independent from credential
-mechanisms.
+### API Key
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.APIKey("X-API-Key", "key", credential.APIKeyHeader),
+    ),
+)
+```
+
+### Access Token Header
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.AccessToken("X-Access-Token", "token"),
+    ),
+)
+```
+
+### Basic Authentication
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.Basic("user", "password"),
+    ),
+)
+```
+
+### JWT
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.JWT("Authorization", jwtToken),
+    ),
+)
+```
+
+### HMAC Signing
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.HMAC("api-key", "secret"),
+    ),
+)
+```
+
+---
+
+## Credential Providers
+
+Credential providers resolve credentials dynamically from configuration.
+
+Example using an OAuth2 provider:
+
+```go
+client := api.New(
+    api.WithAuthProvider(
+        provider.OAuth2(http.DefaultClient),
+        authConfig,
+    ),
+)
+```
+
+Providers may implement automatic credential refresh when tokens expire.
+
+---
+
+## Design Goals
+
+The transport library focuses exclusively on **communication concerns**.
+
+It intentionally avoids:
+
+- business logic
+- retry orchestration
+- domain transformations
+- workflow coordination
+
+These responsibilities belong to the consuming application.
 
 ---
 
 ## License
 
-©️ [Entiqon Labs](https://entiqon.dev)  
-[MIT License](../../LICENSE)
+Originally created by **Isidro A. Lopez G.**  
+Maintained by **Entiqon Labs**
+
+MIT License

@@ -4,21 +4,34 @@ import (
 	"net/http"
 
 	"github.com/entiqon/transport/auth"
+	"github.com/entiqon/transport/config"
 )
 
 // Option configures the API client.
-type Option func(*api)
+type Option func(*client)
 
 // WithHTTPClient configures the HTTP client used to perform requests.
-func WithHTTPClient(client *http.Client) Option {
-	return func(a *api) {
-		a.http = client
+func WithHTTPClient(http *http.Client) Option {
+	return func(a *client) {
+		a.http = http
 	}
 }
 
 // WithCredential configures the credential strategy applied to outgoing requests.
 func WithCredential(credential auth.Credential) Option {
-	return func(a *api) {
+	return func(a *client) {
 		a.credential = credential
+	}
+}
+
+// WithAuthProvider configures the authentication provider and its
+// configuration used to resolve credentials for outgoing requests.
+func WithAuthProvider(
+	provider auth.Provider,
+	cfg config.Auth,
+) Option {
+	return func(a *client) {
+		a.provider = provider
+		a.config = cfg
 	}
 }

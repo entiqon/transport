@@ -1,5 +1,5 @@
 // Package transport provides minimal primitives for executing
-// communication across different transport channels.
+// requests across different communication transports.
 //
 // The library focuses strictly on the communication layer,
 // allowing applications to interact with external systems
@@ -21,19 +21,15 @@
 // interface and are applied through client configuration
 // using `WithCredential`.
 //
-// Supported credential strategies include:
+// Credentials may also be resolved dynamically using
+// authentication providers. Providers implement the
+// `auth.Provider` interface and resolve credentials
+// from configuration before a request is executed.
 //
-//   - credential.AccessToken
-//   - credential.APIKey
-//   - credential.Basic
-//   - credential.BearerToken
-//   - credential.JWT
-//   - credential.HMAC
-//
-// These strategies remain independent from the transport
-// client so applications can implement their own credential
-// resolution mechanisms (OAuth2 flows, token refresh,
-// credential caching, etc.).
+// Some providers maintain internal credential state
+// (such as OAuth2 access tokens) and may optionally
+// implement the `auth.Refreshable` interface to allow
+// forced credential renewal.
 //
 // The project is designed to remain:
 //

@@ -2,20 +2,25 @@
 
 Package: `github.com/entiqon/transport/auth`
 
-The `auth` package defines the credential contract used by transport clients.
+The `auth` package defines the authentication **contracts** used by the
+transport layer.
 
-It provides a minimal interface that allows credential strategies to modify
-outgoing HTTP requests before they are executed by a transport client.
+It separates authentication into three responsibilities:
 
-The goal of this package is to keep the transport layer independent from
-specific authentication mechanisms while allowing different credential
-strategies to be plugged in when needed.
+- **Credential** – modifies outgoing HTTP requests
+- **Provider** – resolves credentials dynamically from configuration
+- **Refreshable** – optionally allows credentials to be invalidated or refreshed
+
+This separation allows the transport client to remain independent of
+specific authentication mechanisms while still supporting dynamic
+authentication flows such as OAuth2.
 
 ---
 
-## Credential Contract
+## Credential
 
-Credential strategies must implement the following interface:
+A **Credential** mutates an outgoing HTTP request in order to apply
+authentication data.
 
 ```go
 type Credential interface {
@@ -24,60 +29,126 @@ type Credential interface {
 ```
 
 The `Apply` method is invoked during request execution and allows the
-strategy to modify the request, typically by adding authentication data
-such as:
+credential to modify the request.
+
+Typical use cases include:
 
 - Authorization headers
 - API keys
-- Access tokens
-- Signed request headers
+- Bearer tokens
+- HMAC signatures
+- JWT headers
 
-The request will be executed immediately after `Apply` returns.
-
-Implementations should therefore:
-
-- mutate only the provided request
-- avoid expensive or blocking operations
-- avoid mutating shared state
-- be safe for reuse across multiple requests
+Credential implementations are provided by the
+`github.com/entiqon/transport/credential` package.
 
 ---
 
-## Example
+## Provider
+
+A **Provider** resolves a credential from configuration.
 
 ```go
-import (
-    "github.com/entiqon/transport/client/api"
-    "github.com/entiqon/transport/token"
-)
+type Provider interface {
+    Resolve(ctx context.Context, cfg config.Auth) (Credential, error)
+}
+```
 
+Providers enable dynamic authentication flows where credentials must be
+retrieved or refreshed before being applied to a request.
+
+Examples include:
+
+- OAuth2 token resolution
+- OAuth2 refresh flows
+- external credential services
+
+Provider implementations are provided by the
+`github.com/entiqon/transport/provider` package.
+
+---
+
+## Refreshable
+
+Some authentication providers maintain internal credential state such as
+cached access tokens.
+
+Providers that support forced credential renewal may implement the
+`Refreshable` interface.
+
+```go
+type Refreshable interface {
+    Refresh(ctx context.Context) error
+}
+```
+
+The `Refresh` method invalidates any cached credentials so that the next
+call to `Provider.Resolve` retrieves fresh credentials.
+
+This is typically used when a transport client receives an
+`HTTP 401 Unauthorized` response and needs to force credential renewal.
+
+Not all providers implement this interface.
+
+---
+
+## Static Credential Example
+
+```go
 client := api.New(
     api.WithCredential(
-        token.NewAccessToken("X-Access-Token", tokenValue),
+        credential.BearerToken("token"),
     ),
 )
 ```
 
-The credential strategy will modify the outgoing HTTP request before it is
+The credential strategy modifies the outgoing HTTP request before it is
 executed by the transport client.
+
+---
+
+## Provider-based Authentication Example
+
+```go
+authConfig := config.Auth{
+    Kind: "oauth2",
+    OAuth2: &config.OAuth2{
+        GrantType:    "client_credentials",
+        TokenURL:     "https://auth.example.com/oauth2/token",
+        ClientID:     "client",
+        ClientSecret: "secret",
+    },
+}
+
+client := api.New(
+    api.WithAuthProvider(
+        provider.OAuth2(http.DefaultClient),
+        authConfig,
+    ),
+)
+```
+
+The provider resolves the credential dynamically before the request is
+executed.
 
 ---
 
 ## Design Goals
 
-The `auth` package focuses exclusively on defining the contract used by
-transport clients.
+The `auth` package intentionally defines **contracts only**.
 
-It intentionally avoids implementing authentication mechanisms directly.
-Instead, concrete credential strategies are implemented in separate
-packages (such as `token`).
+Concrete implementations are located in separate packages:
 
-This keeps the communication layer small, composable, and independent from
-specific authentication strategies.
+| Package | Responsibility |
+|--------|----------------|
+| `credential` | request authentication strategies |
+| `provider` | credential resolution mechanisms |
+
+This design keeps the transport layer small, composable, and extensible.
 
 ---
 
 ## License
 
-©️ [Entiqon Labs](https://entiqon.dev)  
-[MIT License](../../LICENSE)
+© Entiqon Labs  
+Released under the MIT License.

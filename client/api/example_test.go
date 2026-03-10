@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/entiqon/transport"
 	"github.com/entiqon/transport/client/api"
 	"github.com/entiqon/transport/credential"
 )
@@ -23,7 +24,7 @@ func ExampleClient_execute() {
 
 	client := api.New()
 
-	req := &api.Request{
+	req := &transport.Request{
 		Method: "GET",
 		Path:   server.URL,
 	}
@@ -64,7 +65,7 @@ func ExampleClient_execute_withAccessToken() {
 		),
 	)
 
-	req := &api.Request{
+	req := &transport.Request{
 		Method: "GET",
 		Path:   server.URL,
 	}
@@ -105,7 +106,7 @@ func ExampleClient_execute_withBearerToken() {
 		),
 	)
 
-	req := &api.Request{
+	req := &transport.Request{
 		Method: "GET",
 		Path:   server.URL,
 	}
@@ -146,7 +147,7 @@ func ExampleClient_Execute_withAPIKey() {
 		),
 	)
 
-	req := &api.Request{
+	req := &transport.Request{
 		Method: "GET",
 		Path:   server.URL,
 	}

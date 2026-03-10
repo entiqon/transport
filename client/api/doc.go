@@ -1,40 +1,42 @@
-// Package api provides an HTTP transport client for the transport library.
+// Package api provides an HTTP transport client implementation for
+// the transport library.
 //
 // The API client focuses exclusively on executing HTTP requests while
 // remaining independent of authentication mechanisms and application
 // business logic.
 //
 // Authentication data is applied through strategies implementing the
-// auth.Credential interface. These strategies modify outgoing requests
-// before execution.
+// auth.Credential interface. These strategies mutate outgoing HTTP
+// requests before execution.
+//
+// Credentials can be provided directly using static credential
+// strategies or resolved dynamically using authentication providers.
+//
+// Providers implement the auth.Provider interface and resolve
+// credentials from configuration before a request is executed.
+// Some providers may implement auth.Refreshable to allow credential
+// renewal when tokens expire.
 //
 // Examples:
-//
-// Using an Access Token header:
-//
-//	client := api.New(
-//	    api.WithCredential(
-//	        token.NewAccessToken("X-Access-Token", "token"),
-//	    ),
-//	)
 //
 // Using a Bearer token:
 //
 //	client := api.New(
 //	    api.WithCredential(
-//	        token.NewBearerToken("token"),
+//	        credential.BearerToken("token"),
 //	    ),
 //	)
 //
-// Using an API key:
+// Using an OAuth2 provider:
 //
 //	client := api.New(
-//	    api.WithCredential(
-//	        token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
+//	    api.WithAuthProvider(
+//	        provider.OAuth2(http.DefaultClient),
+//	        authConfig,
 //	    ),
 //	)
 //
-// The client validates requests, constructs an http.Request,
-// applies credentials if configured, and executes the request
-// using the configured http.Client.
+// The client validates transport requests, constructs an http.Request,
+// applies credentials if configured, executes the request using the
+// configured http.Client, and returns a transport.Response.
 package api

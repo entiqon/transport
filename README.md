@@ -6,50 +6,78 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/entiqon/transport)](https://goreportcard.com/report/github.com/entiqon/transport)
 [![Latest Release](https://img.shields.io/github/v/release/entiqon/transport)](https://github.com/entiqon/transport/releases)
 [![License](https://img.shields.io/github/license/entiqon/transport)](https://github.com/entiqon/transport/blob/main/LICENSE)
-[![Docs](https://img.shields.io/badge/docs-api--client-blue)](docs/api-client.md)
 
 `transport` is a minimal Go library that provides reusable primitives
 for executing requests across different communication transports.
 
 The library focuses strictly on the **communication layer**, allowing
 applications to interact with external systems through a unified
-transport abstraction. It is designed to remain **small, composable,
-and transport-focused**, leaving business logic, orchestration, and
-data transformation to the application layer.
+transport abstraction.
+
+It is designed to remain **small, composable, and transport-focused**,
+leaving business logic, orchestration, and data transformation to the
+application layer.
 
 ---
 
-## Why transport?
+## Architecture
 
-Applications often interact with external systems through different
-communication channels such as APIs, SFTP servers, or webhooks.
+The library is organized into small composable packages:
 
-`transport` provides a small set of primitives that make those
-interactions consistent while keeping application logic independent
-of the underlying communication mechanism.
+```
+transport (core primitives)
+├── Client
+├── Request
+└── Response
+      ↑
+client/api (HTTP implementation)
+      ↑
+auth (authentication contracts)
+      ↑
+credential (request mutation strategies)
+      ↑
+provider (credential resolution)
+```
+
+This layering keeps transport execution independent of authentication
+mechanisms and credential resolution logic.
 
 ---
 
 ## Example
 
 ```go
-ctx := context.Background()
+package main
 
-client := api.New(
-    api.WithHTTPClient(http.DefaultClient),
+import (
+    "context"
+    "fmt"
+    "net/http"
+
+    "github.com/entiqon/transport"
+    "github.com/entiqon/transport/client/api"
 )
 
-req := &api.Request{
-    Method: "GET",
-    Path:   "https://example.com",
-}
+func main() {
 
-resp, err := client.Execute(ctx, req)
-if err != nil {
-    panic(err)
-}
+    ctx := context.Background()
 
-fmt.Println(resp.Status)
+    client := api.New(
+        api.WithHTTPClient(http.DefaultClient),
+    )
+
+    req := &transport.Request{
+        Method: "GET",
+        Path:   "https://example.com",
+    }
+
+    resp, err := client.Execute(ctx, req)
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(resp.Status)
+}
 ```
 
 ---
@@ -78,12 +106,6 @@ client := api.New(
 )
 ```
 
-Result:
-
-```
-Authorization: Bearer token
-```
-
 ### APIKey
 
 ```go
@@ -104,12 +126,6 @@ client := api.New(
 )
 ```
 
-Result:
-
-```
-Authorization: Basic <base64(user:password)>
-```
-
 ### JWT
 
 ```go
@@ -118,12 +134,6 @@ client := api.New(
         credential.JWT("Authorization", jwtToken),
     ),
 )
-```
-
-Result:
-
-```
-Authorization: Bearer <jwtToken>
 ```
 
 ### HMAC
@@ -136,58 +146,30 @@ client := api.New(
 )
 ```
 
-Result:
-
-```
-X-Key: api-key
-X-Timestamp: <timestamp>
-X-Signature: <hmac signature>
-```
-
-The HMAC credential signs outgoing HTTP requests using a shared
-secret. This pattern is commonly used by APIs that require request
-signing to guarantee message integrity and authenticity.
-
 ---
 
-## Documentation
+## Credential Providers
 
-Detailed documentation is available in the `/docs` directory.
+Credential providers resolve credentials dynamically from configuration.
 
-- API Client – Client design and usage
-- Architecture – transport architecture overview
+Example using an OAuth2 provider:
 
----
+```go
+client := api.New(
+    api.WithAuthProvider(
+        provider.OAuth2(http.DefaultClient),
+        authConfig,
+    ),
+)
+```
 
-## Roadmap
-
-### Transport
-
-- [x] Core transport client interface
-- [x] Request / response primitives
-- [x] HTTP/API transport client
-- [ ] SFTP transport client
-- [ ] Retry and timeout helpers
-- [ ] Client registry
-- [ ] Transport middleware support
-- [ ] Webhook utilities
-
-### Credentials
-
-- [x] Credential abstraction
-- [x] AccessToken strategy
-- [x] BearerToken strategy
-- [x] APIKey strategy
-- [x] BasicAuth strategy
-- [x] JWT strategy
-- [x] HMAC request signing
-- [ ] OAuth token resolvers
+Providers may optionally support credential refresh when tokens expire.
 
 ---
 
 ## License
 
-💡 Originally created by [Isidro A. Lopez G.](https://github.com/ialopezg)  
-🏢 Maintained by the [Entiqon Labs](https://github.com/entiqon)
+Originally created by **Isidro A. Lopez G.**  
+Maintained by **Entiqon Labs**
 
-[MIT](./LICENSE) License
+MIT License

@@ -7,7 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/entiqon/transport"
 	"github.com/entiqon/transport/client/api"
+	"github.com/entiqon/transport/config"
+	"github.com/entiqon/transport/credential"
+	"github.com/entiqon/transport/provider"
 )
 
 type fakeCredential struct {
@@ -48,6 +52,39 @@ func TestAPIClient(t *testing.T) {
 
 	t.Run("New", func(t *testing.T) {
 
+		t.Run("Success", func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+				if r.Header.Get("Authorization") != "Bearer test-token" {
+					t.Fatalf("missing credential")
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"ok":true}`))
+
+			}))
+			defer srv.Close()
+
+			client := api.New(
+				api.WithCredential(credential.BearerToken("test-token")),
+			)
+
+			req := &transport.Request{
+				Method: http.MethodGet,
+				Path:   srv.URL,
+			}
+
+			resp, err := client.Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !resp.OK() {
+				t.Fatal("expected OK response")
+			}
+		})
+
 		t.Run("ClientFallback", func(t *testing.T) {
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +94,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New(api.WithHTTPClient(nil))
 
-			req := &api.Request{
+			req := &transport.Request{
 				Method: "GET",
 				Path:   server.URL,
 			}
@@ -71,47 +108,77 @@ func TestAPIClient(t *testing.T) {
 				t.Fatal("unexpected status")
 			}
 		})
-	})
 
-	t.Run("Auth", func(t *testing.T) {
+		t.Run("With", func(t *testing.T) {
 
-		t.Run("CredentialApplied", func(t *testing.T) {
+			t.Run("Credential", func(t *testing.T) {
 
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			}))
-			defer server.Close()
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}))
+				defer server.Close()
 
-			client := api.New(
-				api.WithCredential(fakeCredential{err: nil}),
-			)
+				client := api.New(
+					api.WithCredential(fakeCredential{err: nil}),
+				)
 
-			req := &api.Request{
-				Method: "GET",
-				Path:   server.URL,
-			}
+				req := &transport.Request{
+					Method: "GET",
+					Path:   server.URL,
+				}
 
-			_, err := client.Execute(context.Background(), req)
-			if err != nil {
-				t.Fatal(err)
-			}
+				_, err := client.Execute(context.Background(), req)
+				if err != nil {
+					t.Fatal(err)
+				}
+			})
+
+			t.Run("Provider", func(t *testing.T) {
+
+				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(200)
+				}))
+				defer srv.Close()
+
+				oauth2 := provider.OAuth2(srv.Client())
+
+				authConfig := config.Auth{
+					Kind: "oauth2",
+					OAuth2: &config.OAuth2{
+						GrantType:    "client_credentials",
+						TokenURL:     srv.URL,
+						ClientID:     "client",
+						ClientSecret: "secret",
+					},
+				}
+
+				client := api.New(
+					api.WithAuthProvider(oauth2, authConfig),
+				)
+
+				req := &transport.Request{
+					Method: http.MethodGet,
+					Path:   srv.URL,
+				}
+
+				_, _ = client.Execute(context.Background(), req)
+			})
 		})
 
-		t.Run("CredentialError", func(t *testing.T) {
+		t.Run("InvalidConfig", func(t *testing.T) {
 
 			client := api.New(
-				api.WithCredential(fakeCredential{err: errors.New("credential failed")}),
+				api.WithAuthProvider(provider.OAuth2(nil), config.Auth{}), // Kind intentionally empty
 			)
 
-			req := &api.Request{
-				Method: "GET",
-				Path:   "https://example.com",
+			req := &transport.Request{
+				Method: http.MethodGet,
+				Path:   "http://example.com",
 			}
 
 			_, err := client.Execute(context.Background(), req)
-
 			if err == nil {
-				t.Fatal("expected credential error")
+				t.Fatal("expected invalid auth config error")
 			}
 		})
 	})
@@ -133,7 +200,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &api.Request{
+			req := &transport.Request{
 				Path: "https://example.com",
 			}
 
@@ -148,7 +215,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &api.Request{
+			req := &transport.Request{
 				Method: "GET",
 			}
 
@@ -166,7 +233,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &api.Request{
+			req := &transport.Request{
 				Method: "GET",
 				Path:   "https://example.com",
 			}
@@ -194,7 +261,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &api.Request{
+			req := &transport.Request{
 				Method: "GET",
 				Path:   server.URL,
 			}
@@ -238,7 +305,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &api.Request{
+			req := &transport.Request{
 				Method: "GET",
 				Path:   server.URL,
 				Query: map[string]string{
@@ -274,7 +341,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &api.Request{
+			req := &transport.Request{
 				Method: "GET",
 				Path:   server.URL,
 				Headers: map[string]string{
@@ -298,7 +365,7 @@ func TestAPIClient(t *testing.T) {
 
 				client := api.New()
 
-				req := &api.Request{
+				req := &transport.Request{
 					Method: "GET",
 					Path:   "://bad-url",
 				}
@@ -320,7 +387,7 @@ func TestAPIClient(t *testing.T) {
 					api.WithHTTPClient(httpClient),
 				)
 
-				req := &api.Request{
+				req := &transport.Request{
 					Method: "GET",
 					Path:   "https://example.com",
 				}
@@ -342,7 +409,7 @@ func TestAPIClient(t *testing.T) {
 					api.WithHTTPClient(httpClient),
 				)
 
-				req := &api.Request{
+				req := &transport.Request{
 					Method: "GET",
 					Path:   "https://example.com",
 				}
@@ -353,6 +420,27 @@ func TestAPIClient(t *testing.T) {
 					t.Fatal("expected body read error")
 				}
 			})
+		})
+	})
+
+	t.Run("Error", func(t *testing.T) {
+
+		t.Run("Credential", func(t *testing.T) {
+
+			client := api.New(
+				api.WithCredential(fakeCredential{err: errors.New("credential failed")}),
+			)
+
+			req := &transport.Request{
+				Method: "GET",
+				Path:   "https://example.com",
+			}
+
+			_, err := client.Execute(context.Background(), req)
+
+			if err == nil {
+				t.Fatal("expected credential error")
+			}
 		})
 	})
 }

@@ -21,11 +21,6 @@
 //     Injects the Authorization header using the
 //     HTTP Basic authentication scheme.
 //
-//   - JWT
-//     Injects a JSON Web Token (JWT) into an outgoing HTTP request.
-//     If the header is "Authorization", the Bearer scheme is applied
-//     automatically.
-//
 //   - HMAC
 //     Signs outgoing HTTP requests using an HMAC-SHA256 signature.
 //     The credential injects authentication headers including:
@@ -36,6 +31,11 @@
 //
 //     The signature is computed from request metadata using a
 //     shared secret.
+//
+//   - JWT
+//     Injects a JSON Web Token (JWT) into an outgoing HTTP request.
+//     If the header is "Authorization", the Bearer scheme is applied
+//     automatically.
 //
 // These strategies remain independent of the transport client,
 // allowing authentication mechanisms to evolve without modifying

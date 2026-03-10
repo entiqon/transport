@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The project follows **Semantic Versioning**.
 
+# [0.8.0] - 2026-03-09
+
+## Added
+
+* OAuth2 credential provider (`provider.OAuth2`)
+* Support for OAuth2 grant types:
+  * `refresh_token`
+  * `client_credentials`
+* Automatic OAuth2 access token refresh
+* Credential caching inside providers
+* `auth.Provider` interface for dynamic credential resolution
+* `auth.Refreshable` interface for credential renewal
+* `WithAuthProvider` client option for provider-based authentication
+* OAuth2 provider test suite
+
+## Improved
+
+* Refactored transport primitives to root package:
+  * `transport.Request`
+  * `transport.Response`
+* Improved documentation across the repository:
+  * README
+  * GoDoc
+  * provider documentation
+  * credential documentation
+* Expanded examples for credentials and providers
+* Achieved **100% unit test coverage across the repository**
+
+## Compatibility
+
+Fully backward compatible with **v0.7.0**.
+
 ---
 
 # [0.7.0] - 2026-03-09

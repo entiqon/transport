@@ -1,15 +1,15 @@
-package api_test
+package transport_test
 
 import (
 	"testing"
 
-	"github.com/entiqon/transport/client/api"
+	"github.com/entiqon/transport"
 )
 
 func TestResponse(t *testing.T) {
 	t.Run("HeaderNil", func(t *testing.T) {
 
-		resp := &api.Response{}
+		resp := &transport.Response{}
 
 		if resp.Header("Content-Type") != "" {
 			t.Fatal("expected empty header for nil headers map")
@@ -18,7 +18,7 @@ func TestResponse(t *testing.T) {
 
 	t.Run("HeaderValue", func(t *testing.T) {
 
-		resp := &api.Response{
+		resp := &transport.Response{
 			Headers: map[string]string{
 				"Content-Type": "application/json",
 			},
@@ -34,7 +34,7 @@ func TestResponse(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 
-		resp := &api.Response{Status: 200}
+		resp := &transport.Response{Status: 200}
 
 		if !resp.OK() {
 			t.Fatal("expected OK for status 200")
@@ -43,7 +43,7 @@ func TestResponse(t *testing.T) {
 
 	t.Run("StatusText", func(t *testing.T) {
 
-		resp := &api.Response{Status: 200}
+		resp := &transport.Response{Status: 200}
 
 		if resp.StatusText() != "OK" {
 			t.Fatalf("unexpected status text: %s", resp.StatusText())
