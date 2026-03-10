@@ -24,9 +24,10 @@
 // Supported credential strategies include:
 //
 //   - credential.AccessToken
-//   - credential.BearerToken
 //   - credential.APIKey
 //   - credential.Basic
+//   - credential.BearerToken
+//   - credential.JWT
 //
 // These strategies remain independent from the transport
 // client so applications can implement their own credential

@@ -15,6 +15,14 @@ can be applied through transport configuration options.
 
 ## Supported Credentials
 
+- AccessToken
+- BearerToken
+- APIKey
+- Basic
+- JWT
+
+---
+
 ### Access Token
 
 The Access Token credential injects a token into a configurable HTTP
@@ -24,9 +32,9 @@ This pattern is commonly used by APIs that rely on custom header tokens.
 
 Examples include:
 
-* Shopify
-* internal service APIs
-* partner integrations
+- Shopify
+- internal service APIs
+- partner integrations
 
 The credential sets the header value directly on the outgoing request.
 
@@ -52,8 +60,8 @@ The API Key credential injects a static key into outgoing HTTP requests.
 
 The key can be applied either as:
 
-* an HTTP header
-* a query parameter
+- an HTTP header
+- a query parameter
 
 This pattern is commonly used by third-party APIs that rely on
 simple API key authentication.
@@ -78,6 +86,26 @@ The credential sets the header:
 Authorization: Basic `<base64(username:password)>`
 
 This pattern is commonly used by legacy APIs and service integrations.
+
+---
+
+### JWT
+
+The JWT credential injects a JSON Web Token into an outgoing HTTP request.
+
+If the configured header is `Authorization`, the credential automatically
+applies the Bearer authentication scheme.
+
+Example header usage:
+
+Authorization: Bearer `<jwt>`
+
+Custom headers are also supported:
+
+X-JWT-Assertion: `<jwt>`
+
+This pattern is commonly used for service-to-service authentication and
+JWT assertion flows.
 
 ---
 
@@ -108,10 +136,10 @@ strategies.
 
 It does not implement:
 
-* OAuth2 authorization flows
-* token refresh logic
-* credential resolution
-* session management
+- OAuth2 authorization flows
+- token refresh logic
+- credential resolution
+- session management
 
 These responsibilities belong to higher-level components in the
 consuming application.

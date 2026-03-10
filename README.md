@@ -36,17 +36,17 @@ of the underlying communication mechanism.
 ctx := context.Background()
 
 client := api.New(
-	api.WithHTTPClient(http.DefaultClient),
+    api.WithHTTPClient(http.DefaultClient),
 )
 
 req := &api.Request{
-	Method: "GET",
-	Path:   "https://example.com",
+    Method: "GET",
+    Path:   "https://example.com",
 }
 
 resp, err := client.Execute(ctx, req)
 if err != nil {
-	panic(err)
+    panic(err)
 }
 
 fmt.Println(resp.Status)
@@ -54,45 +54,76 @@ fmt.Println(resp.Status)
 
 ---
 
-## Credentials Example
+## Credential Strategies
 
-Credential strategies can be injected into the client to modify
-outgoing requests before execution.
+Credential strategies modify outgoing requests before execution.
 
-### Access Token
-
-```go
-client := api.New(
-	api.WithCredential(
-		token.NewAccessToken("X-Access-Token", "token"),
-	),
-)
-```
-
-### Bearer Token
+### AccessToken
 
 ```go
 client := api.New(
-	api.WithCredential(
-		token.NewBearerToken("token"),
-	),
+    api.WithCredential(
+        credential.AccessToken("X-Access-Token", "token"),
+    ),
 )
 ```
 
-Injects:
+### BearerToken
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.BearerToken("token"),
+    ),
+)
+```
+
+Result:
 
 ```
 Authorization: Bearer token
 ```
 
-### API Key
+### APIKey
 
 ```go
 client := api.New(
-	api.WithCredential(
-		token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
-	),
+    api.WithCredential(
+        credential.APIKey("X-API-Key", "key", credential.APIKeyHeader),
+    ),
 )
+```
+
+### Basic
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.Basic("user", "password"),
+    ),
+)
+```
+
+Result:
+
+```
+Authorization: Basic <base64(user:password)>
+```
+
+### JWT
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.JWT("Authorization", jwtToken),
+    ),
+)
+```
+
+Result:
+
+```
+Authorization: Bearer <jwtToken>
 ```
 
 ---
@@ -125,7 +156,8 @@ Detailed documentation is available in the `/docs` directory.
 - [x] AccessToken strategy
 - [x] BearerToken strategy
 - [x] APIKey strategy
-- [ ] BasicAuth strategy
+- [x] BasicAuth strategy
+- [x] JWT strategy
 - [ ] HMAC request signing
 - [ ] OAuth token resolvers
 

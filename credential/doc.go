@@ -21,6 +21,11 @@
 //     Injects the Authorization header using the
 //     HTTP Basic authentication scheme.
 //
+//   - JWT
+//     Injects a JSON Web Token (JWT) into an outgoing HTTP request.
+//     If the header is "Authorization", the Bearer scheme is applied
+//     automatically.
+//
 // These strategies remain independent of the transport client,
 // allowing authentication mechanisms to evolve without modifying
 // the underlying HTTP transport implementation.

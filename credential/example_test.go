@@ -77,3 +77,17 @@ func ExampleBasic() {
 	// Output:
 	// Basic
 }
+
+func ExampleJWT() {
+
+	req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+	cred := credential.JWT("Authorization", "jwt_token")
+
+	_ = cred.Apply(context.Background(), req)
+
+	fmt.Println(req.Header.Get("Authorization"))
+
+	// Output:
+	// Bearer jwt_token
+}

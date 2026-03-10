@@ -6,6 +6,27 @@ The project follows **Semantic Versioning**.
 
 ---
 
+# [0.6.0] - 2026-03-09
+
+## Added
+
+* `JWT` credential strategy
+* Automatic Bearer scheme when using `Authorization` header
+* Support for custom JWT headers (e.g. `X-JWT-Assertion`)
+* Table-driven credential tests covering all strategies
+
+## Improved
+
+* Expanded credential documentation
+* Improved pkg.go.dev examples
+* Consistent credential strategy coverage across tests
+
+## Compatibility
+
+Fully backward compatible with **v0.5.0**.
+
+---
+
 # [0.5.0] - 2026-03-09
 
 ## Added
