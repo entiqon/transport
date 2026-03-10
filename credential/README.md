@@ -1,15 +1,15 @@
-# Token Credentials
+# Credential Strategies
 
-Package: `github.com/entiqon/transport/token`
+Package: `github.com/entiqon/transport/credential`
 
-The `token` package provides token-based credential strategies for the
-transport library.
+The `credential` package provides authentication credential strategies
+for the transport library.
 
 These credentials implement the `auth.Credential` interface and inject
 authentication information into outgoing HTTP requests.
 
-Token credentials are independent of the transport client and can be
-applied through transport configuration options.
+Credential strategies remain independent of the transport client and
+can be applied through transport configuration options.
 
 ---
 
@@ -24,9 +24,9 @@ This pattern is commonly used by APIs that rely on custom header tokens.
 
 Examples include:
 
-- Shopify
-- internal service APIs
-- partner integrations
+* Shopify
+* internal service APIs
+* partner integrations
 
 The credential sets the header value directly on the outgoing request.
 
@@ -42,7 +42,7 @@ authentication.
 
 The credential sets the header:
 
-Authorization: Bearer <token>
+Authorization: Bearer `<token>`
 
 ---
 
@@ -52,35 +52,48 @@ The API Key credential injects a static key into outgoing HTTP requests.
 
 The key can be applied either as:
 
-- an HTTP header
-- a query parameter
+* an HTTP header
+* a query parameter
 
-This pattern is commonly used by third‑party APIs that rely on
+This pattern is commonly used by third-party APIs that rely on
 simple API key authentication.
 
 Example header usage:
 
-X-API-Key: <key>
+X-API-Key: `<key>`
 
 Example query usage:
 
-https://api.example.com/resource?api_key=<key>
+https://api.example.com/resource?api_key=`<key>`
+
+---
+
+### Basic Authentication
+
+The Basic credential injects an HTTP Authorization header using the
+Basic authentication scheme.
+
+The credential sets the header:
+
+Authorization: Basic `<base64(username:password)>`
+
+This pattern is commonly used by legacy APIs and service integrations.
 
 ---
 
 ## Design
 
-Token credentials follow the transport credential abstraction.
+Credential strategies follow the transport credential abstraction.
 
 Each credential modifies the outgoing HTTP request before it is executed
 by the transport client.
 
 Application
-    ↓
+↓
 Transport Client
-    ↓
+↓
 Credential Strategy
-    ↓
+↓
 External System
 
 This design keeps authentication logic independent from request
@@ -90,15 +103,15 @@ execution.
 
 ## Package Scope
 
-The `token` package intentionally provides only simple token-based
-credentials.
+The `credential` package intentionally provides only simple credential
+strategies.
 
 It does not implement:
 
-- OAuth2 authorization flows
-- token refresh logic
-- credential resolution
-- session management
+* OAuth2 authorization flows
+* token refresh logic
+* credential resolution
+* session management
 
 These responsibilities belong to higher-level components in the
 consuming application.

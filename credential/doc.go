@@ -1,8 +1,8 @@
-// Package token provides token-based authentication strategies
+// Package credential provides authentication credential strategies
 // used by the transport library.
 //
-// Token strategies implement the auth.Credential interface and inject
-// credentials into outgoing HTTP requests.
+// Credential strategies implement the auth.Credential interface and
+// inject authentication data into outgoing HTTP requests.
 //
 // Supported strategies:
 //
@@ -17,7 +17,11 @@
 //     Injects an API key either as an HTTP header or
 //     as a query parameter.
 //
+//   - Basic
+//     Injects the Authorization header using the
+//     HTTP Basic authentication scheme.
+//
 // These strategies remain independent of the transport client,
 // allowing authentication mechanisms to evolve without modifying
 // the underlying HTTP transport implementation.
-package token
+package credential

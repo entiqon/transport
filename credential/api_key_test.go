@@ -1,11 +1,11 @@
-package token_test
+package credential_test
 
 import (
 	"context"
 	"net/http"
 	"testing"
 
-	"github.com/entiqon/transport/token"
+	"github.com/entiqon/transport/credential"
 )
 
 func TestAPIKeyToken(t *testing.T) {
@@ -16,7 +16,7 @@ func TestAPIKeyToken(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-			cred := token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader)
+			cred := credential.APIKey("X-API-Key", "token", credential.APIKeyHeader)
 
 			err := cred.Apply(context.Background(), req)
 			if err != nil {
@@ -36,7 +36,7 @@ func TestAPIKeyToken(t *testing.T) {
 			req, _ := http.NewRequest("GET", "https://example.com", nil)
 
 			// location omitted -> should default to header
-			cred := token.NewAPIKey("X-API-Key", "token")
+			cred := credential.APIKey("X-API-Key", "token")
 
 			err := cred.Apply(context.Background(), req)
 			if err != nil {
@@ -55,7 +55,7 @@ func TestAPIKeyToken(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-			cred := token.NewAPIKey("api_key", "token", token.APIKeyQuery)
+			cred := credential.APIKey("api_key", "token", credential.APIKeyQuery)
 
 			err := cred.Apply(context.Background(), req)
 			if err != nil {
@@ -77,7 +77,7 @@ func TestAPIKeyToken(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-			cred := token.NewAPIKey("", "token")
+			cred := credential.APIKey("", "token")
 
 			err := cred.Apply(context.Background(), req)
 			if err == nil {
@@ -89,7 +89,7 @@ func TestAPIKeyToken(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-			cred := token.NewAPIKey("X-API-Key", "")
+			cred := credential.APIKey("X-API-Key", "")
 
 			err := cred.Apply(context.Background(), req)
 			if err == nil {
@@ -101,10 +101,10 @@ func TestAPIKeyToken(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-			cred := token.NewAPIKey(
+			cred := credential.APIKey(
 				"X-API-Key",
 				"token",
-				token.APIKeyLocation("invalid"),
+				credential.APIKeyLocation("invalid"),
 			)
 
 			err := cred.Apply(context.Background(), req)

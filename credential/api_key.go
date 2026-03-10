@@ -1,4 +1,4 @@
-package token
+package credential
 
 import (
 	"context"
@@ -63,14 +63,14 @@ type apiKey struct {
 	in    APIKeyLocation // header | query
 }
 
-// NewAPIKey creates a new API key credential.
+// APIKey creates a new API key credential.
 //
 // key is the header or query parameter name (e.g. "X-API-Key").
 // value is the API key value.
 //
 // The optional location specifies where the key should be injected.
 // If omitted, the key is added to the request headers.
-func NewAPIKey(key, value string, in ...APIKeyLocation) auth.Credential {
+func APIKey(key, value string, in ...APIKeyLocation) auth.Credential {
 
 	location := APIKeyHeader
 

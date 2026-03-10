@@ -1,4 +1,4 @@
-package token
+package credential
 
 import (
 	"context"
@@ -18,8 +18,8 @@ type bearerToken struct {
 	token string
 }
 
-// NewBearerToken creates a new Bearer token authentication strategy.
-func NewBearerToken(token string) auth.Credential {
+// BearerToken creates a new Bearer token authentication strategy.
+func BearerToken(token string) auth.Credential {
 	return &bearerToken{
 		token: token,
 	}

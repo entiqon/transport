@@ -1,4 +1,4 @@
-package token
+package credential
 
 import (
 	"context"
@@ -18,8 +18,8 @@ type accessToken struct {
 	value string
 }
 
-// NewAccessToken creates a new AccessToken authentication strategy.
-func NewAccessToken(header, token string) auth.Credential {
+// AccessToken creates a new AccessToken authentication strategy.
+func AccessToken(header, token string) auth.Credential {
 	return &accessToken{
 		key:   header,
 		value: token,

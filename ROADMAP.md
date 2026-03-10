@@ -1,32 +1,34 @@
 # Transport Authentication Roadmap
 
-This roadmap outlines the authentication strategies planned for the transport library.
+This roadmap outlines the authentication strategies planned for the
+transport library.
 
-Each release increment introduces new strategies while keeping the transport layer independent of credential resolution.
+Each release increment introduces new credential strategies while
+keeping the transport layer independent of credential resolution.
 
 ---
 
 # v0.2.0 — Foundation
 
-Authentication abstractions and initial token strategy.
+Authentication abstractions and initial credential strategy.
 
-- [x] `auth.Credential` strategy interface
-- [x] Authentication injection via `WithCredential`
-- [x] `AccessToken` strategy
-- [x] API client authentication integration
-- [x] Query parameter propagation
-- [x] Structured tests for credential execution
+* [x] `auth.Credential` strategy interface
+* [x] Authentication injection via `WithCredential`
+* [x] `AccessToken` credential strategy
+* [x] API client authentication integration
+* [x] Query parameter propagation
+* [x] Structured tests for credential execution
 
 ---
 
-# v0.3.0 — Bearer Token Support
+# v0.3.0 — Bearer Token
 
 Standard bearer authentication used by most HTTP APIs.
 
-- [x] `BearerToken` authentication strategy
-- [x] Authorization header injection
-- [x] Unit tests for bearer authentication
-- [x] API client documentation update
+* [x] `BearerToken` credential strategy
+* [x] Authorization header injection
+* [x] Unit tests for bearer authentication
+* [x] API client documentation update
 
 ---
 
@@ -34,13 +36,13 @@ Standard bearer authentication used by most HTTP APIs.
 
 Common authentication mechanisms used by most APIs.
 
-- [x] `APIKey` authentication strategy
-- [x] API key injection via headers
-- [x] API key injection via query parameters
-- [x] Optional location (defaults to header)
-- [x] Location validation (`APIKeyLocation`)
-- [x] Expanded authentication tests
-- [x] Minimal examples for pkg.go.dev
+* [x] `APIKey` credential strategy
+* [x] API key injection via headers
+* [x] API key injection via query parameters
+* [x] Optional location (defaults to header)
+* [x] Location validation (`APIKeyLocation`)
+* [x] Expanded credential tests
+* [x] Minimal examples for pkg.go.dev
 
 ---
 
@@ -48,10 +50,11 @@ Common authentication mechanisms used by most APIs.
 
 HTTP Basic authentication strategy.
 
-- [ ] `BasicAuth` authentication strategy
-- [ ] Authorization header generation
-- [ ] Unit tests for basic authentication
-- [ ] Documentation examples
+* [x] `Basic` credential strategy
+* [x] Authorization header generation (`Basic base64(username:password)`)
+* [x] Unit tests for basic authentication
+* [x] Credential documentation updates
+* [x] Credential package normalization (`token` → `credential`)
 
 ---
 
@@ -59,11 +62,11 @@ HTTP Basic authentication strategy.
 
 Authentication mechanisms that require request hashing or signatures.
 
-- [ ] `HMAC` request signing strategy
-- [ ] Configurable hashing algorithms
-- [ ] Payload signing support
-- [ ] Timestamp validation support
-- [ ] Canonical request builder
+* [ ] `HMAC` request signing strategy
+* [ ] Configurable hashing algorithms
+* [ ] Payload signing support
+* [ ] Timestamp validation support
+* [ ] Canonical request builder
 
 ---
 
@@ -71,11 +74,14 @@ Authentication mechanisms that require request hashing or signatures.
 
 Introduce dynamic credential resolution.
 
-- [ ] Token resolver interface
-- [ ] Static resolver
-- [ ] Cached resolver
-- [ ] Expiring token support
-- [ ] Concurrency-safe token refresh
+These components allow credentials to be obtained dynamically rather
+than being statically configured.
+
+* [ ] Credential resolver interface
+* [ ] Static resolver
+* [ ] Cached resolver
+* [ ] Expiring token support
+* [ ] Concurrency-safe token refresh
 
 ---
 
@@ -83,10 +89,10 @@ Introduce dynamic credential resolution.
 
 Dynamic authentication flows.
 
-- [ ] OAuth2 client credentials resolver
-- [ ] Refresh token resolver
-- [ ] Automatic token refresh
-- [ ] Token caching
+* [ ] OAuth2 client credentials resolver
+* [ ] Refresh token resolver
+* [ ] Automatic token refresh
+* [ ] Token caching
 
 ---
 
@@ -94,16 +100,17 @@ Dynamic authentication flows.
 
 Advanced authentication mechanisms.
 
-- [ ] AWS Signature V4 strategy
-- [ ] mTLS support
-- [ ] Pluggable credential providers
-- [ ] Advanced retry policies for authentication failures
+* [ ] AWS Signature V4 strategy
+* [ ] mTLS support
+* [ ] Pluggable credential providers
+* [ ] Advanced retry policies for authentication failures
 
 ---
 
 # Design Principles
 
-The transport layer will always remain independent from authentication logic.
+The transport layer will always remain independent from authentication
+logic.
 
 ```
 Client
@@ -113,4 +120,9 @@ Credential Strategy
 Credential Resolver
 ```
 
-This separation ensures the library can support static tokens, OAuth flows, signed requests, and enterprise authentication mechanisms without modifying the transport client.
+This separation ensures the library can support static tokens, OAuth
+flows, signed requests, and enterprise authentication mechanisms
+without modifying the transport client.
+
+Credential strategies remain simple request modifiers, while credential
+resolvers handle dynamic token acquisition and lifecycle management.

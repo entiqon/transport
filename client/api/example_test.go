@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/entiqon/transport/client/api"
-	"github.com/entiqon/transport/token"
+	"github.com/entiqon/transport/credential"
 )
 
 // Example_execute demonstrates executing a simple HTTP request using
@@ -60,7 +60,7 @@ func ExampleClient_execute_withAccessToken() {
 
 	client := api.New(
 		api.WithCredential(
-			token.NewAccessToken("X-Access-Token", "token"),
+			credential.AccessToken("X-Access-Token", "token"),
 		),
 	)
 
@@ -101,7 +101,7 @@ func ExampleClient_execute_withBearerToken() {
 
 	client := api.New(
 		api.WithCredential(
-			token.NewBearerToken("token"),
+			credential.BearerToken("token"),
 		),
 	)
 
@@ -142,7 +142,7 @@ func ExampleClient_Execute_withAPIKey() {
 
 	client := api.New(
 		api.WithCredential(
-			token.NewAPIKey("X-API-Key", "token", token.APIKeyHeader),
+			credential.APIKey("X-API-Key", "token", credential.APIKeyHeader),
 		),
 	)
 

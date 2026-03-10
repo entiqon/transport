@@ -1,18 +1,18 @@
-package token_test
+package credential_test
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/entiqon/transport/token"
+	"github.com/entiqon/transport/credential"
 )
 
-func ExampleNewAccessToken() {
+func ExampleAccessToken() {
 
 	req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-	cred := token.NewAccessToken("X-Access-Token", "abc123")
+	cred := credential.AccessToken("X-Access-Token", "abc123")
 
 	_ = cred.Apply(context.Background(), req)
 
@@ -22,11 +22,11 @@ func ExampleNewAccessToken() {
 	// abc123
 }
 
-func ExampleNewBearerToken() {
+func ExampleBearerToken() {
 
 	req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-	cred := token.NewBearerToken("abc123")
+	cred := credential.BearerToken("abc123")
 
 	_ = cred.Apply(context.Background(), req)
 
@@ -36,11 +36,11 @@ func ExampleNewBearerToken() {
 	// Bearer abc123
 }
 
-func ExampleNewAPIKey_header() {
+func ExampleAPIKey_header() {
 
 	req, _ := http.NewRequest("GET", "https://example.com", nil)
 
-	cred := token.NewAPIKey("X-API-Key", "abc123", token.APIKeyHeader)
+	cred := credential.APIKey("X-API-Key", "abc123", credential.APIKeyHeader)
 
 	_ = cred.Apply(context.Background(), req)
 
@@ -50,11 +50,11 @@ func ExampleNewAPIKey_header() {
 	// abc123
 }
 
-func ExampleNewAPIKey_query() {
+func ExampleAPIKey_query() {
 
 	req, _ := http.NewRequest("GET", "https://example.com/resource", nil)
 
-	cred := token.NewAPIKey("api_key", "abc123", token.APIKeyQuery)
+	cred := credential.APIKey("api_key", "abc123", credential.APIKeyQuery)
 
 	_ = cred.Apply(context.Background(), req)
 
@@ -62,4 +62,18 @@ func ExampleNewAPIKey_query() {
 
 	// Output:
 	// abc123
+}
+
+func ExampleBasic() {
+
+	req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+	cred := credential.Basic("user", "pass")
+
+	_ = cred.Apply(context.Background(), req)
+
+	fmt.Println(req.Header.Get("Authorization")[:5])
+
+	// Output:
+	// Basic
 }
