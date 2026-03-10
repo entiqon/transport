@@ -126,6 +126,28 @@ Result:
 Authorization: Bearer <jwtToken>
 ```
 
+### HMAC
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.HMAC("api-key", "secret"),
+    ),
+)
+```
+
+Result:
+
+```
+X-Key: api-key
+X-Timestamp: <timestamp>
+X-Signature: <hmac signature>
+```
+
+The HMAC credential signs outgoing HTTP requests using a shared
+secret. This pattern is commonly used by APIs that require request
+signing to guarantee message integrity and authenticity.
+
 ---
 
 ## Documentation
@@ -158,7 +180,7 @@ Detailed documentation is available in the `/docs` directory.
 - [x] APIKey strategy
 - [x] BasicAuth strategy
 - [x] JWT strategy
-- [ ] HMAC request signing
+- [x] HMAC request signing
 - [ ] OAuth token resolvers
 
 ---

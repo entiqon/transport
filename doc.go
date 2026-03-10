@@ -28,6 +28,7 @@
 //   - credential.Basic
 //   - credential.BearerToken
 //   - credential.JWT
+//   - credential.HMAC
 //
 // These strategies remain independent from the transport
 // client so applications can implement their own credential

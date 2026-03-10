@@ -20,6 +20,7 @@ can be applied through transport configuration options.
 - APIKey
 - Basic
 - JWT
+- HMAC
 
 ---
 
@@ -106,6 +107,34 @@ X-JWT-Assertion: `<jwt>`
 
 This pattern is commonly used for service-to-service authentication and
 JWT assertion flows.
+
+---
+
+### HMAC
+
+The HMAC credential signs outgoing HTTP requests using a shared secret.
+
+The credential injects the following headers:
+
+X-Key: `<key>`
+X-Timestamp: `<unix timestamp>`
+X-Signature: `<signature>`
+
+The signature is computed using an HMAC-SHA256 hash derived from
+request metadata and a shared secret.
+
+Example usage:
+
+```go
+client := api.New(
+    api.WithCredential(
+        credential.HMAC("api-key", "secret"),
+    ),
+)
+```
+
+This pattern is commonly used by APIs that require request signing
+to verify message integrity and prevent tampering.
 
 ---
 

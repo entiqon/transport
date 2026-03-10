@@ -101,6 +101,22 @@ func TestCredentials(t *testing.T) {
 			cred:      credential.JWT("Authorization", ""),
 			expectErr: true,
 		},
+		{
+			name:     "HMAC",
+			cred:     credential.HMAC("api-key", "secret"),
+			header:   "X-Key",
+			expected: "api-key",
+		},
+		{
+			name:      "HMACMissingKey",
+			cred:      credential.HMAC("", "secret"),
+			expectErr: true,
+		},
+		{
+			name:      "HMACMissingSecret",
+			cred:      credential.HMAC("api-key", ""),
+			expectErr: true,
+		},
 	}
 
 	for _, tc := range tests {
@@ -137,4 +153,29 @@ func TestCredentials(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("EdgeCases", func(t *testing.T) {
+		t.Run("Headers", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", "https://example.com/resource", nil)
+
+			cred := credential.HMAC("api-key", "secret")
+
+			err := cred.Apply(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if req.Header.Get("X-Key") != "api-key" {
+				t.Fatalf("expected X-Key header")
+			}
+
+			if req.Header.Get("X-Timestamp") == "" {
+				t.Fatalf("expected X-Timestamp header")
+			}
+
+			if req.Header.Get("X-Signature") == "" {
+				t.Fatalf("expected X-Signature header")
+			}
+		})
+	})
 }

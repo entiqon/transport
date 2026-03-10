@@ -6,6 +6,30 @@ The project follows **Semantic Versioning**.
 
 ---
 
+# [0.7.0] - 2026-03-09
+
+## Added
+
+* `HMAC` credential strategy for request signing
+* HMAC-SHA256 signature generation for outgoing HTTP requests
+* Automatic injection of request signing headers:
+    * `X-Key`
+    * `X-Timestamp`
+    * `X-Signature`
+* Unit tests covering HMAC credential validation and execution
+
+## Improved
+
+* Expanded credential documentation
+* README examples updated to include HMAC request signing
+* Credential strategy coverage extended across the library
+
+## Compatibility
+
+Fully backward compatible with **v0.6.0**.
+
+---
+
 # [0.6.0] - 2026-03-09
 
 ## Added
