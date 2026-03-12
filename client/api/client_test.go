@@ -48,32 +48,46 @@ func (f failingBodyRoundTripper) RoundTrip(*http.Request) (*http.Response, error
 	}, nil
 }
 
+func newTestServer(
+	t *testing.T,
+	handler func(http.ResponseWriter, *http.Request),
+) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(handler))
+
+	t.Cleanup(func() {
+		srv.Close()
+	})
+
+	return srv
+}
+
+func newRequest(method, path string) *transport.Request {
+	return &transport.Request{
+		Method: method,
+		Path:   path,
+	}
+}
+
 func TestAPIClient(t *testing.T) {
-
 	t.Run("New", func(t *testing.T) {
-
 		t.Run("Success", func(t *testing.T) {
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+			server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer test-token" {
 					t.Fatalf("missing credential")
 				}
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`{"ok":true}`))
-
-			}))
-			defer srv.Close()
+				_, _ = w.Write([]byte(`{"ok":true}`))
+			})
 
 			client := api.New(
 				api.WithCredential(credential.BearerToken("test-token")),
 			)
 
-			req := &transport.Request{
-				Method: http.MethodGet,
-				Path:   srv.URL,
-			}
+			req := newRequest(http.MethodGet, server.URL)
 
 			resp, err := client.Execute(context.Background(), req)
 			if err != nil {
@@ -86,18 +100,13 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("ClientFallback", func(t *testing.T) {
-
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-			}))
-			defer server.Close()
+			})
 
 			client := api.New(api.WithHTTPClient(nil))
 
-			req := &transport.Request{
-				Method: "GET",
-				Path:   server.URL,
-			}
+			req := newRequest(http.MethodGet, server.URL)
 
 			resp, err := client.Execute(context.Background(), req)
 			if err != nil {
@@ -110,22 +119,16 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("With", func(t *testing.T) {
-
 			t.Run("Credential", func(t *testing.T) {
-
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
-				}))
-				defer server.Close()
+				})
 
 				client := api.New(
 					api.WithCredential(fakeCredential{err: nil}),
 				)
 
-				req := &transport.Request{
-					Method: "GET",
-					Path:   server.URL,
-				}
+				req := newRequest(http.MethodGet, server.URL)
 
 				_, err := client.Execute(context.Background(), req)
 				if err != nil {
@@ -134,19 +137,23 @@ func TestAPIClient(t *testing.T) {
 			})
 
 			t.Run("Provider", func(t *testing.T) {
+				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
 
-				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(200)
-				}))
-				defer srv.Close()
+					_, _ = w.Write([]byte(`{
+						"access_token": "test-token",
+						"token_type": "Bearer",
+						"expires_in": 3600
+					}`))
+				})
 
-				oauth2 := provider.OAuth2(srv.Client())
+				oauth2 := provider.OAuth2(server.Client())
 
 				authConfig := config.Auth{
 					Kind: "oauth2",
 					OAuth2: &config.OAuth2{
 						GrantType:    "client_credentials",
-						TokenURL:     srv.URL,
+						TokenURL:     server.URL,
 						ClientID:     "client",
 						ClientSecret: "secret",
 					},
@@ -156,25 +163,146 @@ func TestAPIClient(t *testing.T) {
 					api.WithAuthProvider(oauth2, authConfig),
 				)
 
-				req := &transport.Request{
-					Method: http.MethodGet,
-					Path:   srv.URL,
+				req := newRequest(http.MethodGet, server.URL)
+
+				resp, err := client.Execute(context.Background(), req)
+				if err != nil {
+					t.Fatal(err)
 				}
 
-				_, _ = client.Execute(context.Background(), req)
+				if !resp.OK() {
+					t.Fatal("unexpected status")
+				}
+			})
+
+			t.Run("BasePath", func(t *testing.T) {
+
+				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+
+					if r.URL.Path != "/api" {
+						t.Fatalf(
+							"expected path '/api', got '%s'",
+							r.URL.Path,
+						)
+					}
+
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := api.New(
+					api.WithBasePath("api"),
+				)
+
+				req := newRequest(http.MethodGet, server.URL)
+
+				resp, err := client.Execute(context.Background(), req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !resp.OK() {
+					t.Fatal("unexpected status")
+				}
+			})
+
+			t.Run("Version", func(t *testing.T) {
+				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+					if r.Header.Get("X-API-Version") != "v1" {
+						t.Fatalf(
+							"expected version header 'v1', got '%s'",
+							r.Header.Get("X-API-Version"),
+						)
+					}
+
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := api.New(
+					api.WithVersion("v1"),
+				)
+
+				req := newRequest(http.MethodGet, server.URL)
+
+				resp, err := client.Execute(context.Background(), req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !resp.OK() {
+					t.Fatal("unexpected status")
+				}
+			})
+
+			t.Run("BasePathAndVersion", func(t *testing.T) {
+
+				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+
+					if r.URL.Path != "/api/v1" {
+						t.Fatalf("expected path '/api/v1', got '%s'", r.URL.Path)
+					}
+
+					if r.Header.Get("X-API-Version") != "v1" {
+						t.Fatalf(
+							"expected version header 'v1', got '%s'",
+							r.Header.Get("X-API-Version"),
+						)
+					}
+
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := api.New(
+					api.WithBasePath("api"),
+					api.WithVersion("v1"),
+				)
+
+				req := newRequest(http.MethodGet, server.URL)
+
+				resp, err := client.Execute(context.Background(), req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !resp.OK() {
+					t.Fatal("unexpected status")
+				}
+			})
+
+			t.Run("BasePathAlreadyPresent", func(t *testing.T) {
+				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path != "/api/users" {
+						t.Fatalf(
+							"expected path '/api/users', got '%s'",
+							r.URL.Path,
+						)
+					}
+
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := api.New(
+					api.WithBasePath("api"),
+				)
+
+				req := newRequest(http.MethodGet, server.URL+"/api/users")
+
+				resp, err := client.Execute(context.Background(), req)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !resp.OK() {
+					t.Fatal("unexpected status")
+				}
 			})
 		})
 
 		t.Run("InvalidConfig", func(t *testing.T) {
-
 			client := api.New(
 				api.WithAuthProvider(provider.OAuth2(nil), config.Auth{}), // Kind intentionally empty
 			)
 
-			req := &transport.Request{
-				Method: http.MethodGet,
-				Path:   "http://example.com",
-			}
+			req := newRequest(http.MethodGet, "http://example.com")
 
 			_, err := client.Execute(context.Background(), req)
 			if err == nil {
@@ -184,9 +312,7 @@ func TestAPIClient(t *testing.T) {
 	})
 
 	t.Run("Validation", func(t *testing.T) {
-
 		t.Run("InvalidRequestError", func(t *testing.T) {
-
 			client := api.New()
 
 			_, err := client.Execute(context.Background(), nil)
@@ -197,7 +323,6 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("MissingMethodError", func(t *testing.T) {
-
 			client := api.New()
 
 			req := &transport.Request{
@@ -212,7 +337,6 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("MissingPathError", func(t *testing.T) {
-
 			client := api.New()
 
 			req := &transport.Request{
@@ -227,19 +351,14 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("ContextCanceled", func(t *testing.T) {
-
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
 
 			client := api.New()
 
-			req := &transport.Request{
-				Method: "GET",
-				Path:   "https://example.com",
-			}
+			req := newRequest(http.MethodGet, "http://example.com")
 
 			_, err := client.Execute(ctx, req)
-
 			if err == nil {
 				t.Fatal("expected context error")
 			}
@@ -251,9 +370,7 @@ func TestAPIClient(t *testing.T) {
 	})
 
 	t.Run("Execution", func(t *testing.T) {
-
 		t.Run("Success", func(t *testing.T) {
-
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))
@@ -261,10 +378,7 @@ func TestAPIClient(t *testing.T) {
 
 			client := api.New()
 
-			req := &transport.Request{
-				Method: "GET",
-				Path:   server.URL,
-			}
+			req := newRequest(http.MethodGet, server.URL)
 
 			resp, err := client.Execute(context.Background(), req)
 
@@ -282,7 +396,6 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("QueryPropagation", func(t *testing.T) {
-
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 				if r.URL.Query().Get("q") != "transport" {
@@ -325,7 +438,6 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("HeaderPropagation", func(t *testing.T) {
-
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 				if r.Header.Get("X-Test-Header") != "transport-test" {
@@ -360,15 +472,10 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("Errors", func(t *testing.T) {
-
 			t.Run("Request", func(t *testing.T) {
-
 				client := api.New()
 
-				req := &transport.Request{
-					Method: "GET",
-					Path:   "://bad-url",
-				}
+				req := newRequest(http.MethodGet, "://bad-url")
 
 				_, err := client.Execute(context.Background(), req)
 
@@ -378,7 +485,6 @@ func TestAPIClient(t *testing.T) {
 			})
 
 			t.Run("HTTP", func(t *testing.T) {
-
 				httpClient := &http.Client{
 					Transport: failingRoundTripper{},
 				}
@@ -387,10 +493,7 @@ func TestAPIClient(t *testing.T) {
 					api.WithHTTPClient(httpClient),
 				)
 
-				req := &transport.Request{
-					Method: "GET",
-					Path:   "https://example.com",
-				}
+				req := newRequest(http.MethodGet, "https://example.com")
 
 				_, err := client.Execute(context.Background(), req)
 
@@ -400,7 +503,6 @@ func TestAPIClient(t *testing.T) {
 			})
 
 			t.Run("BodyRead", func(t *testing.T) {
-
 				httpClient := &http.Client{
 					Transport: failingBodyRoundTripper{},
 				}
@@ -409,10 +511,7 @@ func TestAPIClient(t *testing.T) {
 					api.WithHTTPClient(httpClient),
 				)
 
-				req := &transport.Request{
-					Method: "GET",
-					Path:   "https://example.com",
-				}
+				req := newRequest(http.MethodGet, "https://example.com")
 
 				_, err := client.Execute(context.Background(), req)
 
@@ -424,22 +523,30 @@ func TestAPIClient(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-
 		t.Run("Credential", func(t *testing.T) {
-
 			client := api.New(
 				api.WithCredential(fakeCredential{err: errors.New("credential failed")}),
 			)
 
-			req := &transport.Request{
-				Method: "GET",
-				Path:   "https://example.com",
-			}
+			req := newRequest(http.MethodGet, "http://example.com")
 
 			_, err := client.Execute(context.Background(), req)
 
 			if err == nil {
 				t.Fatal("expected credential error")
+			}
+		})
+
+		t.Run("InvalidURL", func(t *testing.T) {
+
+			client := api.New()
+
+			req := newRequest("GET\n", "http://example.com")
+
+			_, err := client.Execute(context.Background(), req)
+
+			if err == nil {
+				t.Fatal("expected url parse error")
 			}
 		})
 	})

@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The project follows **Semantic Versioning**.
 
+---
+
+# [0.8.1] - 2026-03-12
+
+## Added
+
+* API client versioning support via `WithVersion`
+* Base path configuration via `WithBasePath`
+* Automatic `X-API-Version` header injection when version is configured
+* Example tests demonstrating versioned and base path API usage
+
+## Improved
+
+* Improved URL construction logic inside the API client
+* Base path prefix detection to avoid duplicated paths
+* Request building now safely resolves URLs using `url.Parse`
+* Expanded unit test coverage for request building edge cases
+* Expanded example tests for API client usage
+
+## Fixed
+
+* Fixed duplicate base path generation (`/api/api/...`)
+* Fixed version header handling in client execution
+* Fixed edge case where base path was not respected when already present
+
+## Compatibility
+
+Fully backward compatible with **v0.8.0**.
+
+---
+
 # [0.8.0] - 2026-03-09
 
 ## Added

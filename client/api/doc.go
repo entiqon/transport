@@ -1,21 +1,25 @@
 // Package api provides an HTTP transport client implementation for
 // the transport library.
 //
-// The API client focuses exclusively on executing HTTP requests while
+// The API client is responsible for executing HTTP requests while
 // remaining independent of authentication mechanisms and application
 // business logic.
 //
-// Authentication data is applied through strategies implementing the
+// Authentication is applied through strategies implementing the
 // auth.Credential interface. These strategies mutate outgoing HTTP
 // requests before execution.
 //
-// Credentials can be provided directly using static credential
-// strategies or resolved dynamically using authentication providers.
+// Credentials may be provided directly or resolved dynamically using
+// authentication providers.
 //
 // Providers implement the auth.Provider interface and resolve
 // credentials from configuration before a request is executed.
-// Some providers may implement auth.Refreshable to allow credential
+// Some providers may implement auth.Refreshable to support credential
 // renewal when tokens expire.
+//
+// The client supports versioned APIs through the WithVersion option.
+// When configured, the version segment is inserted between the base
+// URL and request path.
 //
 // Examples:
 //

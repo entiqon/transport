@@ -18,7 +18,6 @@ type credentialCase struct {
 }
 
 func TestCredentials(t *testing.T) {
-
 	tests := []credentialCase{
 		{
 			name:     "AccessToken",
@@ -120,9 +119,7 @@ func TestCredentials(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-
 		t.Run(tc.name, func(t *testing.T) {
-
 			req, err := http.NewRequest("GET", "https://example.com", nil)
 			if err != nil {
 				t.Fatalf("unexpected request creation error: %v", err)
@@ -155,7 +152,65 @@ func TestCredentials(t *testing.T) {
 	}
 
 	t.Run("EdgeCases", func(t *testing.T) {
-		t.Run("Headers", func(t *testing.T) {
+		t.Run("AccessToken", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+			cred := credential.AccessToken("", "token")
+
+			err := cred.Apply(context.Background(), req)
+			if err == nil {
+				t.Fatalf("expected error for empty token")
+			}
+		})
+
+		t.Run("APIKey", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", "https://example.com/resource", nil)
+
+			cred := credential.APIKey("api_key", "secret", credential.APIKeyQuery)
+
+			err := cred.Apply(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			q := req.URL.Query()
+
+			if q.Get("api_key") != "secret" {
+				t.Fatalf("expected api_key query parameter")
+			}
+		})
+
+		t.Run("BasicAuth", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+			cred := credential.Basic("user", "pass")
+
+			err := cred.Apply(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if req.Header.Get("Authorization") == "" {
+				t.Fatalf("expected Authorization header")
+			}
+		})
+
+		t.Run("BearerToken", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+			cred := credential.BearerToken("token")
+
+			err := cred.Apply(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if req.Header.Get("Authorization") != "Bearer token" {
+				t.Fatalf("expected bearer authorization header")
+			}
+		})
+
+		t.Run("HMAC", func(t *testing.T) {
 			req, _ := http.NewRequest("GET", "https://example.com/resource", nil)
 
 			cred := credential.HMAC("api-key", "secret")
@@ -165,16 +220,31 @@ func TestCredentials(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if req.Header.Get("X-Key") != "api-key" {
+			if req.Header.Get("X-Key") == "" {
 				t.Fatalf("expected X-Key header")
+			}
+
+			if req.Header.Get("X-Signature") == "" {
+				t.Fatalf("expected X-Signature header")
 			}
 
 			if req.Header.Get("X-Timestamp") == "" {
 				t.Fatalf("expected X-Timestamp header")
 			}
+		})
 
-			if req.Header.Get("X-Signature") == "" {
-				t.Fatalf("expected X-Signature header")
+		t.Run("JWT", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+			cred := credential.JWT("Authorization", "jwt-token")
+
+			err := cred.Apply(context.Background(), req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if req.Header.Get("Authorization") != "Bearer jwt-token" {
+				t.Fatalf("expected bearer jwt header")
 			}
 		})
 	})

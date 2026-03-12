@@ -145,13 +145,15 @@ Credential strategies follow the transport credential abstraction.
 Each credential modifies the outgoing HTTP request before it is executed
 by the transport client.
 
+```
 Application
-↓
+    ↓
 Transport Client
-↓
+    ↓
 Credential Strategy
-↓
+    ↓
 External System
+```
 
 This design keeps authentication logic independent from request
 execution.

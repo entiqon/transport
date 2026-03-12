@@ -162,3 +162,47 @@ func ExampleClient_Execute_withAPIKey() {
 	// Output:
 	// 200
 }
+
+func ExampleClient_Execute_withBasePath() {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL.Path)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := api.New(
+		api.WithBasePath("api"),
+	)
+
+	req := &transport.Request{
+		Method: http.MethodGet,
+		Path:   server.URL + "/users",
+	}
+
+	_, _ = client.Execute(context.Background(), req)
+
+	// Output:
+	// /api/users
+}
+
+func ExampleClient_Execute_withVersion() {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.Header.Get("X-API-Version"))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := api.New(
+		api.WithVersion("v1"),
+	)
+
+	req := &transport.Request{
+		Method: http.MethodGet,
+		Path:   server.URL,
+	}
+
+	_, _ = client.Execute(context.Background(), req)
+
+	// Output:
+	// v1
+}

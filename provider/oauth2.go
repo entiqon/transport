@@ -83,7 +83,6 @@ func (p *oauth2Provider) Resolve(
 	now := time.Now()
 
 	if p.credential == nil || now.After(p.expiresAt) {
-
 		cred, exp, refreshToken, err := p.requestToken(ctx, cfg.OAuth2)
 		if err != nil {
 			return nil, err

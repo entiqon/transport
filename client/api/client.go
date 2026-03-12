@@ -4,6 +4,9 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
+	"strings"
 
 	"github.com/entiqon/transport"
 	"github.com/entiqon/transport/auth"
@@ -20,6 +23,8 @@ type client struct {
 	credential auth.Credential
 	provider   auth.Provider
 	config     config.Auth
+	basePath   string
+	version    string
 }
 
 // New creates a new API transport client.
@@ -40,6 +45,8 @@ func New(opts ...Option) transport.Client {
 	if c.http == nil {
 		c.http = http.DefaultClient
 	}
+
+	c.basePath = resolveBaseURL(c.basePath, c.version)
 
 	return c
 }
@@ -85,6 +92,24 @@ func (c *client) Execute(ctx context.Context, req *transport.Request) (*transpor
 	return c.buildResponse(resp)
 }
 
+func resolveBaseURL(base, version string) string {
+	base = strings.Trim(base, "/")
+
+	if base == "" && version == "" {
+		return ""
+	}
+
+	if base == "" {
+		return "/" + version
+	}
+
+	if version == "" {
+		return "/" + base
+	}
+
+	return "/" + base + "/" + version
+}
+
 // applyCredential resolves and applies authentication credentials
 // to the provided HTTP request if authentication is configured.
 func (c *client) applyCredential(
@@ -104,15 +129,33 @@ func (c *client) applyCredential(
 	return cred.Apply(ctx, req)
 }
 
-// buildHTTPRequest constructs an HTTP request from the transport Request.
+// buildHTTPRequest constructs the underlying HTTP request from
+// a transport Request using the client's resolved base URL.
 func (c *client) buildHTTPRequest(
 	ctx context.Context,
 	req *transport.Request,
 ) (*http.Request, error) {
-
-	httpReq, err := http.NewRequestWithContext(ctx, req.Method, req.Path, req.Body)
+	u, err := url.Parse(req.Path)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.basePath != "" && !strings.HasPrefix(u.Path, c.basePath) {
+		u.Path = path.Join(c.basePath, u.Path)
+	}
+
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		req.Method,
+		u.String(),
+		req.Body,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.version != "" {
+		httpReq.Header.Set("X-API-Version", c.version)
 	}
 
 	for k, v := range req.Headers {
@@ -155,7 +198,6 @@ func (c *client) buildResponse(resp *http.Response) (*transport.Response, error)
 func (c *client) resolveCredential(
 	ctx context.Context,
 ) (auth.Credential, error) {
-
 	if c.credential != nil {
 		return c.credential, nil
 	}
