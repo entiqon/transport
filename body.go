@@ -26,9 +26,12 @@ type Body interface {
 	// Reader returns the serialized request payload.
 	Reader() (io.Reader, error)
 
-	// ContentType returns the HTTP Content-Type associated with the
-	// payload. If non-empty and the request does not already define
-	// a Content-Type header, the transport client will automatically
-	// apply it.
+	// ContentType returns the HTTP Content-Type associated with the body.
+	//
+	// The transport client uses this value to automatically populate the
+	// Content-Type header when executing requests.
+	//
+	// If the request already defines a Content-Type header, that value
+	// takes precedence over the body-provided content type.
 	ContentType() string
 }

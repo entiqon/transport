@@ -135,6 +135,7 @@ func (c *client) buildHTTPRequest(
 	ctx context.Context,
 	req *transport.Request,
 ) (*http.Request, error) {
+
 	u, err := url.Parse(req.Path)
 	if err != nil {
 		return nil, err
@@ -148,7 +149,7 @@ func (c *client) buildHTTPRequest(
 		ctx,
 		req.Method,
 		u.String(),
-		req.Body,
+		nil, // Body handled below
 	)
 	if err != nil {
 		return nil, err
@@ -167,6 +168,21 @@ func (c *client) buildHTTPRequest(
 		q.Set(k, v)
 	}
 	httpReq.URL.RawQuery = q.Encode()
+
+	// Apply request body if present
+	if req.Body != nil {
+		reader, err := req.Body.Reader()
+		if err != nil {
+			return nil, err
+		}
+
+		httpReq.Body = io.NopCloser(reader)
+
+		if ct := req.Body.ContentType(); ct != "" &&
+			httpReq.Header.Get("Content-Type") == "" {
+			httpReq.Header.Set("Content-Type", ct)
+		}
+	}
 
 	return httpReq, nil
 }

@@ -48,7 +48,7 @@ func (f failingBodyRoundTripper) RoundTrip(*http.Request) (*http.Response, error
 	}, nil
 }
 
-func newTestServer(
+func NewTestServer(
 	t *testing.T,
 	handler func(http.ResponseWriter, *http.Request),
 ) *httptest.Server {
@@ -73,7 +73,7 @@ func newRequest(method, path string) *transport.Request {
 func TestAPIClient(t *testing.T) {
 	t.Run("New", func(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
-			server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer test-token" {
 					t.Fatalf("missing credential")
 				}
@@ -100,7 +100,7 @@ func TestAPIClient(t *testing.T) {
 		})
 
 		t.Run("ClientFallback", func(t *testing.T) {
-			server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})
 
@@ -120,7 +120,7 @@ func TestAPIClient(t *testing.T) {
 
 		t.Run("With", func(t *testing.T) {
 			t.Run("Credential", func(t *testing.T) {
-				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 				})
 
@@ -137,7 +137,7 @@ func TestAPIClient(t *testing.T) {
 			})
 
 			t.Run("Provider", func(t *testing.T) {
-				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "application/json")
 
 					_, _ = w.Write([]byte(`{
@@ -177,7 +177,7 @@ func TestAPIClient(t *testing.T) {
 
 			t.Run("BasePath", func(t *testing.T) {
 
-				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 
 					if r.URL.Path != "/api" {
 						t.Fatalf(
@@ -206,7 +206,7 @@ func TestAPIClient(t *testing.T) {
 			})
 
 			t.Run("Version", func(t *testing.T) {
-				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 					if r.Header.Get("X-API-Version") != "v1" {
 						t.Fatalf(
 							"expected version header 'v1', got '%s'",
@@ -235,7 +235,7 @@ func TestAPIClient(t *testing.T) {
 
 			t.Run("BasePathAndVersion", func(t *testing.T) {
 
-				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 
 					if r.URL.Path != "/api/v1" {
 						t.Fatalf("expected path '/api/v1', got '%s'", r.URL.Path)
@@ -269,7 +269,7 @@ func TestAPIClient(t *testing.T) {
 			})
 
 			t.Run("BasePathAlreadyPresent", func(t *testing.T) {
-				server := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				server := NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path != "/api/users" {
 						t.Fatalf(
 							"expected path '/api/users', got '%s'",

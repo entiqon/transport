@@ -1,10 +1,14 @@
 package transport_test
 
 import (
+	"context"
 	"io"
+	"net/http"
 	"testing"
 
 	"github.com/entiqon/transport"
+	"github.com/entiqon/transport/client/api"
+	"github.com/entiqon/transport/helpers"
 )
 
 func TestBody(t *testing.T) {
@@ -73,5 +77,67 @@ func TestBody(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected marshal error")
 		}
+	})
+
+	t.Run("ContentType", func(t *testing.T) {
+		t.Run("Auto", func(t *testing.T) {
+			server := helpers.NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("Content-Type") != "application/json" {
+					t.Fatalf(
+						"expected Content-Type application/json, got %s",
+						r.Header.Get("Content-Type"),
+					)
+				}
+
+				w.WriteHeader(http.StatusOK)
+			})
+
+			client := api.New()
+
+			req := &transport.Request{
+				Method: http.MethodPost,
+				Path:   server.URL,
+				Body: transport.JSON(map[string]string{
+					"name": "john",
+				}),
+			}
+
+			resp, err := client.Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !resp.OK() {
+				t.Fatal("unexpected status")
+			}
+		})
+
+		t.Run("Override", func(t *testing.T) {
+			server := helpers.NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("Content-Type") != "application/custom" {
+					t.Fatalf("header override not respected")
+				}
+
+				w.WriteHeader(http.StatusOK)
+			})
+
+			client := api.New()
+
+			req := &transport.Request{
+				Method: http.MethodPost,
+				Path:   server.URL,
+				Headers: map[string]string{
+					"Content-Type": "application/custom",
+				},
+				Body: transport.JSON(map[string]string{
+					"name": "john",
+				}),
+			}
+
+			_, err := client.Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 	})
 }

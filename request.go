@@ -1,7 +1,5 @@
 package transport
 
-import "io"
-
 // Request represents a transport request executed by a Client.
 //
 // It describes the information required to perform an outbound
@@ -18,7 +16,7 @@ type Request struct {
 	// Method defines the request method (e.g., GET, POST, PUT, DELETE).
 	Method string
 
-	// Path defines the target resource path or full endpoint URL.
+	// Path defines either a relative resource path or a full endpoint URL.
 	Path string
 
 	// Headers contains optional HTTP headers applied to the request.
@@ -29,7 +27,13 @@ type Request struct {
 
 	// Body represents the request payload.
 	//
-	// The value must implement io.Reader and will be passed directly
-	// to the underlying transport request.
-	Body io.Reader
+	// The value must implement the Body interface, which allows the
+	// transport client to obtain a new reader for each request execution.
+	// This enables retry-safe request bodies and supports helpers such
+	// as JSON payload serialization.
+	//
+	// If the body declares a Content-Type, the client will automatically
+	// propagate it to the outgoing request unless the header is already
+	// defined in Headers.
+	Body Body
 }
