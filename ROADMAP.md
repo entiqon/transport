@@ -125,7 +125,7 @@ common HTTP workflows.
 -   [x] `Body` interface for typed request payloads
 -   [x] `transport.JSON()` request body helper
 -   [x] Retry-safe body readers
--   [ ] JSON response decoding helpers
+-   [x] JSON response decoding helpers
 -   [ ] `DoJSON` execution helper
 -   [ ] Automatic `Content-Type` management
 -   [ ] Response decoding utilities

@@ -1,6 +1,9 @@
 package transport
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 // Response represents the result of executing a transport Request.
 //
@@ -53,4 +56,19 @@ func (r *Response) Header(name string) string {
 // transport responses.
 func (r *Response) StatusText() string {
 	return http.StatusText(r.Status)
+}
+
+// JSON decodes the response body as JSON into the provided value.
+//
+// It is a convenience helper that avoids manually calling json.Unmarshal
+// when working with JSON APIs.
+//
+// Example:
+//
+//	var order Order
+//	if err := resp.JSON(&order); err != nil {
+//	    return err
+//	}
+func (r *Response) JSON(out any) error {
+	return json.Unmarshal(r.Body, out)
 }
