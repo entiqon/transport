@@ -27,6 +27,11 @@ jobs:
         run: |
           gotestx -c
 
+      - name: Remove test helper packages from coverage
+        run: |
+          grep -v "internal/apitest" coverage.out > coverage.filtered.out
+          mv coverage.filtered.out coverage.out
+
       - name: Enforce minimum coverage (80%)
         run: |
           if [ ! -s coverage.out ]; then

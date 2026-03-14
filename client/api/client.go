@@ -51,6 +51,30 @@ func New(opts ...Option) transport.Client {
 	return c
 }
 
+// DoJSON executes the given request and decodes the JSON response
+// into the provided value.
+//
+// It is a convenience helper for APIs that return JSON responses.
+// The request is executed using Execute and the response body is
+// decoded using Response.JSON.
+//
+// Example:
+//
+//	var order CustomerOrder
+//	err := client.DoJSON(ctx, req, &order)
+func (c *client) DoJSON(
+	ctx context.Context,
+	req *transport.Request,
+	out any,
+) error {
+	resp, err := c.Execute(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return resp.JSON(out)
+}
+
 // Execute performs the given transport Request.
 //
 // It validates the request, builds the underlying HTTP request,
@@ -189,7 +213,6 @@ func (c *client) buildHTTPRequest(
 
 // buildResponse converts an HTTP response into a transport Response.
 func (c *client) buildResponse(resp *http.Response) (*transport.Response, error) {
-
 	headers := make(map[string]string, len(resp.Header))
 
 	for k, v := range resp.Header {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/entiqon/transport"
 	"github.com/entiqon/transport/client/api"
-	"github.com/entiqon/transport/helpers"
+	"github.com/entiqon/transport/internal/apitest"
 )
 
 func TestBody(t *testing.T) {
@@ -81,7 +81,7 @@ func TestBody(t *testing.T) {
 
 	t.Run("ContentType", func(t *testing.T) {
 		t.Run("Auto", func(t *testing.T) {
-			server := helpers.NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			server := apitest.NewServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Content-Type") != "application/json" {
 					t.Fatalf(
 						"expected Content-Type application/json, got %s",
@@ -113,7 +113,7 @@ func TestBody(t *testing.T) {
 		})
 
 		t.Run("Override", func(t *testing.T) {
-			server := helpers.NewTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			server := apitest.NewServer(t, func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Content-Type") != "application/custom" {
 					t.Fatalf("header override not respected")
 				}
