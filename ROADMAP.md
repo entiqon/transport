@@ -1,10 +1,14 @@
+
 # Transport Authentication Roadmap
 
-This roadmap outlines the authentication strategies planned for the
-transport library.
+This roadmap outlines the authentication and client evolution planned
+for the transport library.
 
-Each release increment introduces new credential strategies while
-keeping the transport layer independent of credential resolution.
+The project separates **transport execution**, **credential strategies**,
+and **credential providers** to keep the architecture clean and
+extensible.
+
+Transport execution must remain independent of authentication logic.
 
 ---
 
@@ -62,7 +66,7 @@ HTTP Basic authentication strategy.
 
 Authentication mechanisms that require request hashing or signatures.
 
-* [ ] `HMAC` request signing strategy
+* [x] `HMAC` request signing strategy
 * [ ] Configurable hashing algorithms
 * [ ] Payload signing support
 * [ ] Timestamp validation support
@@ -77,11 +81,11 @@ Introduce dynamic credential resolution.
 These components allow credentials to be obtained dynamically rather
 than being statically configured.
 
-* [ ] Credential resolver interface
-* [ ] Static resolver
-* [ ] Cached resolver
-* [ ] Expiring token support
-* [ ] Concurrency-safe token refresh
+* [x] Credential resolver interface
+* [x] Static resolver
+* [x] Cached resolver
+* [x] Expiring token support
+* [x] Concurrency-safe token refresh
 
 ---
 
@@ -89,10 +93,112 @@ than being statically configured.
 
 Dynamic authentication flows.
 
-* [ ] OAuth2 client credentials resolver
-* [ ] Refresh token resolver
-* [ ] Automatic token refresh
-* [ ] Token caching
+* [x] OAuth2 client credentials resolver
+* [x] Refresh token resolver
+* [x] Automatic token refresh
+* [x] Token caching
+* [x] `WithAuthProvider` client option
+
+---
+
+# v0.8.x — API Client Stability
+
+Stabilization of the API client behavior.
+
+* [x] Version header injection (`X-API-Version`)
+* [x] `WithVersion` client option
+* [x] `WithBasePath` support
+* [x] Base path normalization
+* [x] Safe URL resolution
+* [x] Query parameter propagation
+* [x] Header propagation
+* [x] Context-aware request execution
+* [x] Credential application pipeline
+* [x] Improved unit test coverage
+
+---
+
+# v0.9.0 — Request Helpers
+
+Improve developer ergonomics when sending requests.
+
+* [ ] JSON request helpers
+* [ ] JSON response decoding helpers
+* [ ] `DoJSON` execution helper
+* [ ] `transport.JSON()` request body helper
+* [ ] Automatic `Content-Type` management
+* [ ] Response decoding utilities
+
+Example:
+
+    client.DoJSON(ctx, req, &result)
+
+---
+
+# v0.10.0 — Middleware Support
+
+Introduce a middleware pipeline for request and response processing.
+
+Middleware enables extensibility without modifying the transport client.
+
+* [ ] Middleware interface
+* [ ] Middleware execution pipeline
+* [ ] Logging middleware example
+* [ ] Metrics middleware example
+* [ ] Retry middleware example
+
+Architecture:
+
+    Request
+       ↓
+    Middleware chain
+       ↓
+    Credential strategy
+       ↓
+    HTTP execution
+
+---
+
+# v0.11.0 — Retry Policies
+
+Add retry capabilities for transient failures.
+
+* [ ] Retry policy configuration
+* [ ] Exponential backoff support
+* [ ] Retry on network errors
+* [ ] Retry on configurable status codes
+* [ ] Retry middleware integration
+
+Example:
+
+    api.WithRetry(3)
+
+---
+
+# v0.12.0 — Observability
+
+Add observability hooks to the transport client.
+
+* [ ] Structured logging support
+* [ ] Request duration tracking
+* [ ] Pluggable logger interface
+* [ ] OpenTelemetry integration hooks
+* [ ] Request tracing support
+
+---
+
+# v0.13.0 — Rate Limiting
+
+Client-side rate limiting support.
+
+* [ ] Token bucket rate limiter
+* [ ] Configurable request limits
+* [ ] Burst configuration
+* [ ] Integration with middleware pipeline
+
+Example:
+
+    api.WithRateLimit(10, time.Second)
 
 ---
 
@@ -112,13 +218,11 @@ Advanced authentication mechanisms.
 The transport layer will always remain independent from authentication
 logic.
 
-```
-Client
-   ↓
-Credential Strategy
-   ↓
-Credential Resolver
-```
+    Client
+       ↓
+    Credential Strategy
+       ↓
+    Credential Resolver
 
 This separation ensures the library can support static tokens, OAuth
 flows, signed requests, and enterprise authentication mechanisms
